@@ -1,0 +1,1175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ready, Set, Recruit</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://alcdn.msauth.net/browser/2.35.0/js/msal-browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+  :root{
+    --bg:#FBF8F7; --wash1:#DCC6C1; --wash2:#F0E6E3;
+    --surface:#FFFFFF; --surface2:#F5EFED; --border:#E9DEDA;
+    --text:#1A1212; --dim:#675A57; --faint:#9A8B87;
+    --accent:#500000; --accent-hover:#6B0A12; --accent-ink:#500000;
+    --accent-soft:#F1E7E4; --accent-line:#D2BAB4; --on-accent:#FFF8F4; --cream:#EFD9B8;
+    --high:#0F6B45; --high-bg:#E4F1EA;
+    --mid:#855A06; --mid-bg:#F8EFDB;
+    --low:#6E5A55; --low-bg:#F2EAE7;
+    --card:0 1px 2px rgba(26,18,18,.04), 0 26px 60px -18px rgba(80,0,0,.28);
+    --soft:0 1px 2px rgba(26,18,18,.04), 0 8px 22px -10px rgba(26,18,18,.14);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#161212; --wash1:#2F1A18; --wash2:#1F1615;
+      --surface:#201A19; --surface2:#2A2322; --border:#3A302E;
+      --text:#F6EFEC; --dim:#A89995; --faint:#7D6E6A;
+      --accent:#7E1420; --accent-hover:#9C1A28; --accent-ink:#EFD9B8;
+      --accent-soft:#2E1E1C; --accent-line:#5E403B; --on-accent:#FFF8F4;
+      --high:#57C99B; --high-bg:#15312A;
+      --mid:#DCAE59; --mid-bg:#332714;
+      --low:#BCA9A3; --low-bg:#2C2422;
+      --card:0 1px 2px rgba(0,0,0,.5), 0 26px 60px -18px rgba(0,0,0,.65);
+      --soft:0 1px 2px rgba(0,0,0,.4), 0 8px 22px -10px rgba(0,0,0,.45);
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:'Figtree',system-ui,-apple-system,sans-serif;
+    font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  h1,h2,h3{margin:0;text-wrap:balance;letter-spacing:-.035em}
+  .mono{font-family:'DM Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+  button,input,select,textarea{font:inherit;color:inherit}
+  :focus-visible{outline:2.5px solid var(--accent-ink);outline-offset:3px;border-radius:8px}
+  ::placeholder{color:var(--faint)}
+  .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+  .top{position:relative;background:radial-gradient(130% 70% at 50% -6%, var(--wash1) 0%, var(--wash2) 44%, var(--bg) 80%);
+    padding-bottom:50px;min-height:100vh}
+  .shell{max-width:1180px;margin:0 auto;padding-inline:24px}
+  .narrow{max-width:640px}
+  nav{display:flex;align-items:center;gap:12px;padding-block:20px}
+  .logo{display:flex;align-items:center;gap:9px;font-weight:800;font-size:18px;letter-spacing:-.03em;
+    background:none;border:none;cursor:pointer;padding:0;color:inherit}
+  .logo i{width:12px;height:12px;background:var(--accent);border-radius:2.5px;transform:rotate(45deg);display:block}
+  .grow{flex-grow:1}
+  .navlnk{background:none;border:none;padding:8px 4px;font-size:15px;font-weight:600;color:var(--dim);cursor:pointer}
+  .navlnk:hover{color:var(--text)}
+  .chip{display:inline-flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--border);
+    border-radius:999px;padding:5px 14px 5px 5px;font-size:14px;font-weight:600;box-shadow:var(--soft)}
+  .chip img{width:28px;height:28px;border-radius:50%}
+  .av{width:28px;height:28px;border-radius:50%;background:var(--accent);color:var(--on-accent);
+    display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800}
+
+  .hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.9fr);gap:56px;align-items:center;padding-block:64px 40px}
+  .pitch h1{font-size:clamp(38px,5.1vw,62px);font-weight:800;line-height:1.02}
+  .pitch h1 em{font-style:normal;color:var(--accent-ink)}
+  .pitch p.sub{margin:22px 0 0;font-size:18px;line-height:1.5;color:var(--dim);max-width:39ch}
+  .proof{margin-top:16px;font-size:14.5px;color:var(--faint)}
+
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:22px;padding:26px;box-shadow:var(--card)}
+  .gbtn{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;height:58px;border-radius:14px;
+    background:var(--surface);border:1.5px solid var(--border);font-size:16px;font-weight:700;cursor:pointer;
+    box-shadow:var(--soft);color:var(--text)}
+  .gbtn:hover{border-color:var(--accent-line)}
+  .gbtn svg{width:20px;height:20px;flex-shrink:0}
+  .perm{margin-top:18px;font-size:13.5px;color:var(--dim);line-height:1.6;background:var(--surface2);
+    padding:14px 15px;border-radius:12px}
+  .perm b{color:var(--text)}
+
+  label.f{display:flex;flex-direction:column;gap:7px;font-size:14.5px;font-weight:600;color:var(--text)}
+  label.f .tip{font-size:13px;font-weight:400;color:var(--dim);line-height:1.5}
+  label.f input,label.f select{height:50px;padding:0 14px;background:var(--surface2);border:1.5px solid transparent;
+    border-radius:13px;outline:none;font-size:15.5px;font-weight:400;color:var(--text);width:100%;appearance:none;-webkit-appearance:none}
+  label.f select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239A8B87' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 16px center;padding-right:38px}
+  label.f input:focus,label.f select:focus{border-color:var(--accent);background:var(--surface)}
+  .two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+  .go{height:54px;width:100%;border:none;border-radius:14px;background:var(--accent);color:var(--on-accent);
+    font-family:inherit;font-size:16.5px;font-weight:700;cursor:pointer}
+  .go:hover{background:var(--accent-hover)}
+  .go[disabled]{opacity:.5;cursor:not-allowed}
+  .pill{background:var(--surface);border:1.5px solid var(--border);border-radius:999px;padding:11px 19px;
+    font-size:14.5px;font-weight:600;cursor:pointer;color:var(--text)}
+  .pill:hover{border-color:var(--accent-line)}
+  .textlnk{background:none;border:none;padding:0;font-size:14px;color:var(--accent-ink);cursor:pointer;font-weight:600}
+
+  .wrap{padding-block:34px 90px}
+  .wrap h2{font-size:clamp(28px,4.4vw,40px);font-weight:800;line-height:1.05}
+  .lede{color:var(--dim);margin:12px 0 0;font-size:17px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:24px;
+    box-shadow:var(--soft);margin-top:20px;display:flex;flex-direction:column;gap:16px}
+  .step{display:grid;grid-template-columns:44px minmax(0,1fr);gap:20px;margin-top:30px}
+  .stepn{width:44px;height:44px;border-radius:50%;background:var(--accent);color:var(--on-accent);
+    display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:800;flex-shrink:0}
+  .steph{font-size:20px;font-weight:800;letter-spacing:-.03em;padding-top:8px}
+  .stepsub{color:var(--dim);font-size:14.5px;margin:5px 0 0}
+  .kicker{font-size:11.5px;letter-spacing:.14em;font-weight:700;color:var(--accent-ink)}
+
+  .drop{border:2px dashed var(--border);border-radius:16px;padding:22px;text-align:center;cursor:pointer;background:var(--surface2)}
+  .drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+  .drop .dt{font-weight:700;font-size:15.5px}
+  .drop .dd{font-size:13.5px;color:var(--dim);margin-top:5px}
+  .privacy{font-size:13px;color:var(--dim);line-height:1.6;background:var(--surface2);padding:13px 15px;border-radius:12px}
+  .privacy b{color:var(--text)}
+  .hits{display:flex;flex-direction:column;gap:7px}
+  .hit{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:var(--dim);background:var(--surface2);padding:10px 12px;border-radius:10px}
+  .hit input{margin-top:3px;accent-color:var(--accent);flex-shrink:0}
+  .err{color:var(--accent-ink);font-size:14px;font-weight:600;min-height:20px}
+
+  .who{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px}
+  .who .nm{font-size:22px;font-weight:800;letter-spacing:-.035em}
+  .who .fm{color:var(--dim);font-size:14.5px;font-weight:500}
+  .mailtop{display:flex;flex-wrap:wrap;gap:18px;align-items:center;justify-content:space-between}
+  .addr{font-size:21px;font-weight:500;letter-spacing:-.02em;word-break:break-all;min-width:0}
+  .gauge{display:flex;align-items:center;gap:13px;flex-shrink:0}
+  .gauge .pct{font-size:42px;font-weight:800;letter-spacing:-.045em;line-height:.9;font-variant-numeric:tabular-nums}
+  .band{font-size:13.5px;font-weight:700} .band.h{color:var(--high)} .band.m{color:var(--mid)} .band.l{color:var(--low)}
+  .bandsub{font-size:12.5px;color:var(--faint)}
+  .plain{padding:14px 16px;border-radius:14px;font-size:15px;line-height:1.55;font-weight:500}
+  .plain.h{background:var(--high-bg);color:var(--high)}
+  .plain.m{background:var(--mid-bg);color:var(--mid)}
+  .plain.l{background:var(--low-bg);color:var(--low)}
+  .flag{font-size:14px;background:var(--mid-bg);color:var(--mid);padding:12px 15px;border-radius:14px;font-weight:500}
+  details summary{cursor:pointer;font-size:14px;font-weight:600;color:var(--dim);list-style:none;padding:4px 0}
+  details summary::-webkit-details-marker{display:none}
+  details summary::before{content:"\25B8 ";color:var(--faint)}
+  details[open] summary::before{content:"\25BE "}
+  ul.why{margin:12px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px}
+  ul.why li{display:flex;gap:11px;font-size:14px;color:var(--dim);line-height:1.5}
+  ul.why li b{flex-shrink:0;width:16px;text-align:center;font-weight:800;color:var(--faint)}
+  .alts{margin-top:16px;padding-top:15px;border-top:1px solid var(--border)}
+  .altrow{display:flex;justify-content:space-between;gap:14px;font-size:13.5px;color:var(--dim);padding:5px 0}
+  .subj{display:flex;gap:11px;align-items:center;flex-wrap:wrap}
+  .subj input{flex-grow:1;min-width:220px;background:var(--surface2);border:1.5px solid transparent;border-radius:12px;
+    height:46px;padding:0 14px;font-size:15.5px;font-weight:600;outline:none}
+  textarea#body{width:100%;min-height:300px;resize:vertical;background:var(--surface2);border:1.5px solid transparent;
+    border-radius:16px;padding:18px;font-size:15.5px;line-height:1.7;outline:none;font-family:inherit}
+  textarea#body:focus,.subj input:focus{border-color:var(--accent);background:var(--surface)}
+  .acts{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .foot{color:var(--faint);font-size:13.5px;line-height:1.55}
+  .foot b{color:var(--mid);font-weight:700}
+  .to{font-size:14.5px;color:var(--dim)}
+  .to span{font-weight:600;color:var(--text)}
+  .sentbox{background:var(--high-bg);color:var(--high);padding:16px;border-radius:14px;font-weight:600;font-size:15px}
+  .cfgwarn{background:var(--mid-bg);color:var(--mid);padding:16px 18px;border-radius:14px;font-size:14.5px;
+    line-height:1.6;margin-top:20px}
+  .cfgwarn code{font-family:'DM Mono',monospace;background:rgba(0,0,0,.07);padding:2px 6px;border-radius:5px}
+
+  .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;background:var(--text);color:var(--bg);
+    padding:12px 20px;border-radius:999px;font-size:14.5px;font-weight:600;z-index:60;box-shadow:var(--card)}
+
+  /* ---------- animated demo ---------- */
+  .gbtn.cta{margin-top:14px;max-width:340px}
+  .gbtn.cta:first-of-type{margin-top:30px}
+  .gbtn[disabled]{opacity:.45;cursor:not-allowed}
+  .gbtn[disabled]:hover{border-color:var(--border)}
+  .via{font-size:12px;font-weight:600;color:var(--faint);border-left:1px solid var(--border);
+    padding-left:9px;margin-left:2px}
+  .pitch .perm{max-width:420px}
+  .stack{position:relative}
+  .ghost{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:16px 20px;
+    margin-inline:18px;box-shadow:var(--soft)}
+  .ghost.a{opacity:.4;margin-bottom:-14px;padding-bottom:26px}
+  .ghost.b{opacity:.32;margin-top:-14px;padding-top:26px}
+  .ghost .gl{height:9px;border-radius:6px;background:var(--surface2)}
+  .ghost .gl+.gl{margin-top:9px}
+  #demo{position:relative;z-index:2;display:flex;flex-direction:column;overflow:hidden}
+  #demo .stagewrap{position:relative;margin-top:14px;min-height:436px}
+  .dstage{display:flex;flex-direction:column;gap:13px}
+  .dfield{display:flex;flex-direction:column;gap:7px}
+  .dlabel{font-size:14.5px;font-weight:600}
+  .dinput{height:50px;border-radius:13px;background:var(--surface2);border:1.5px solid transparent;
+    display:flex;align-items:center;padding:0 15px;font-size:15px;color:var(--text);overflow:hidden;white-space:nowrap}
+  .dinput.on{border-color:var(--accent);background:var(--surface)}
+  .dinput .ph{color:var(--faint)}
+  .dinput.flash{animation:fl .6s ease}
+  @keyframes fl{0%{background:var(--accent-soft);border-color:var(--accent)}100%{background:var(--surface)}}
+  .caret{width:1.5px;height:19px;background:var(--accent-ink);display:none;margin-left:1px;flex-shrink:0}
+  .dinput.typing .caret{display:block;animation:blink 1.05s steps(2,start) infinite}
+  @keyframes blink{50%{opacity:0}}
+  .dhint{font-size:13px;color:var(--dim);min-height:18px}
+  .dhint.ok{color:var(--high);font-weight:600}
+  .dbtn{height:52px;border-radius:14px;background:var(--accent);color:var(--on-accent);display:flex;
+    align-items:center;justify-content:center;font-size:16.5px;font-weight:700;margin-top:2px}
+  .dbtn.press{transform:scale(.975);filter:brightness(.88)}
+  .dres{display:flex;flex-direction:column;gap:12px}
+  .dmailrow{display:flex;align-items:center;justify-content:space-between;gap:14px}
+  .dmail{font-size:15.5px;font-weight:500;letter-spacing:-.02em;min-width:0;overflow:hidden;text-overflow:ellipsis;display:block}
+  .dpct{font-size:34px;font-weight:800;letter-spacing:-.045em;line-height:1;font-variant-numeric:tabular-nums;text-align:right}
+  .dverdict{font-size:13px;font-weight:700;color:var(--high);text-align:right;margin-top:2px}
+  .ddraft{background:var(--surface2);border-radius:14px;padding:14px 15px;font-size:12.5px;line-height:1.62;
+    color:var(--dim);white-space:pre-line}
+  .ddraft b{display:block;color:var(--text);font-weight:700;font-size:13px;margin-bottom:8px;
+    padding-bottom:8px;border-bottom:1px solid var(--border)}
+  .dsend{height:48px;border-radius:13px;background:var(--accent);color:var(--on-accent);display:flex;
+    align-items:center;justify-content:center;gap:9px;font-size:15px;font-weight:700}
+  .dsend.press{transform:scale(.975);filter:brightness(.88)}
+  .dsend.sent{background:var(--high);color:#fff}
+  .fade{animation:fin .4s ease both}
+  @keyframes fin{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
+  #cursor{position:absolute;top:0;left:0;width:21px;height:25px;z-index:12;pointer-events:none;
+    transition:transform .6s cubic-bezier(.33,.02,.2,1);transform:translate(260px,404px)}
+  .ring{position:absolute;width:30px;height:30px;border-radius:50%;border:2px solid var(--accent);
+    z-index:8;pointer-events:none;opacity:0;margin:-15px 0 0 -15px}
+  .ring.go{animation:rg .55s ease-out}
+  @keyframes rg{0%{opacity:.85;transform:scale(.3)}100%{opacity:0;transform:scale(1.5)}}
+  .ctx{position:absolute;z-index:11;background:var(--surface);border:1px solid var(--border);border-radius:9px;
+    padding:4px;box-shadow:var(--card);min-width:146px;font-size:13px;opacity:0;pointer-events:none;
+    transition:opacity .1s;transform-origin:top left}
+  .ctx.show{opacity:1}
+  .ctxi{padding:6px 10px;border-radius:6px;font-weight:500;display:flex;justify-content:space-between;gap:16px}
+  .ctxi span{color:var(--faint);font-size:12px}
+  .ctxi.dim{color:var(--faint)}
+  .ctxi.hi{background:var(--accent);color:var(--on-accent);font-weight:700}
+  .ctxi.hi span{color:rgba(255,248,244,.7)}
+  .ctxsep{height:1px;background:var(--border);margin:4px 6px}
+  .tryhint{text-align:center;font-size:13.5px;color:var(--faint);margin-top:14px}
+  @media (max-width:900px){
+    .ghost.a,.ghost.b{display:none}
+    .gbtn.cta{max-width:none}
+  }
+  @media (max-width:640px){ #demo .stagewrap{min-height:424px} }
+  @media (prefers-reduced-motion:reduce){
+    #cursor{transition:none}
+    .fade,.ring.go,.dinput.flash,.dinput.typing .caret{animation:none}
+  }
+
+  @media (max-width:900px){
+    .hero{grid-template-columns:minmax(0,1fr);gap:34px;padding-block:40px 20px}
+    .pitch p.sub{max-width:none}
+  }
+  @media (max-width:640px){
+    .shell{padding-inline:16px}
+    .panel,.card{padding:18px;border-radius:18px}
+    .two{grid-template-columns:minmax(0,1fr)}
+    .gauge .pct{font-size:36px}
+    .step{grid-template-columns:36px minmax(0,1fr);gap:14px}
+    .stepn{width:36px;height:36px;font-size:16px}
+    .steph{font-size:18px;padding-top:5px}
+  }
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="shell">
+    <nav>
+      <button class="logo" id="homeBtn" type="button"><i></i>Ready, Set, Recruit</button>
+      <div class="grow"></div>
+      <div id="navIn" hidden style="display:flex;align-items:center;gap:12px">
+        <span class="chip"><span class="av" id="navAv">?</span><span id="navName"></span><span class="via" id="navWhere"></span></span>
+        <button class="navlnk" id="signoutBtn" type="button">Sign out</button>
+      </div>
+    </nav>
+  </div>
+
+  <!-- ===== LANDING ===== -->
+  <div id="viewHero">
+    <div class="shell">
+      <div class="hero">
+        <div class="pitch">
+          <h1>Land the coffee chat.<br><em>Then the offer.</em></h1>
+          <p class="sub">Paste a banker's LinkedIn, name the firm, and send a real email from your own Gmail in about ten seconds.</p>
+          <button class="gbtn cta" id="gsi" type="button">
+            <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#4285F4" d="M45.1 24.5c0-1.6-.1-2.8-.4-4H24v7.3h12.1c-.2 2-1.6 5-4.5 7l-.1.3 6.5 5 .5.1c4.1-3.8 6.6-9.4 6.6-15.7"/><path fill="#34A853" d="M24 46c5.9 0 10.9-2 14.5-5.3l-6.9-5.4c-1.8 1.3-4.3 2.2-7.6 2.2-5.8 0-10.7-3.8-12.5-9.1l-.3.1-6.7 5.2-.1.3C7.9 41 15.4 46 24 46"/><path fill="#FBBC05" d="M11.5 28.4c-.5-1.4-.7-2.9-.7-4.4s.3-3 .7-4.4v-.3l-6.8-5.3-.2.1C2.9 17 2 20.4 2 24s.9 7 2.5 9.9z"/><path fill="#EA4335" d="M24 10.5c4.1 0 6.9 1.8 8.5 3.3l6.2-6C34.9 4.3 29.9 2 24 2 15.4 2 7.9 7 4.5 14.1l7 5.5c1.8-5.3 6.7-9.1 12.5-9.1"/></svg>
+            Continue with Google
+          </button>
+          <button class="gbtn cta alt" id="msi" type="button">
+            <svg viewBox="0 0 23 23" aria-hidden="true"><path fill="#F25022" d="M1 1h10v10H1z"/><path fill="#7FBA00" d="M12 1h10v10H12z"/><path fill="#00A4EF" d="M1 12h10v10H1z"/><path fill="#FFB900" d="M12 12h10v10H12z"/></svg>
+            Continue with Outlook
+          </button>
+          <div class="perm">
+            <b>Google will ask for two things.</b> Your email address, which is how we know who you are, and permission to send mail on your behalf. That's it. We can't read your inbox, we don't ask to, and the permission only covers messages you write here and press send on yourself.
+          </div>
+          <div class="cfgwarn" id="cfgwarn" hidden>
+            <b>Not configured yet.</b> Open <code>index.html</code> and replace <code>PASTE_YOUR_CLIENT_ID_HERE</code> and <code>PASTE_YOUR_MICROSOFT_CLIENT_ID</code> with the client IDs from Google Cloud and the Azure portal. Setting up just one is fine, the other button simply stays disabled. See <code>SETUP.md</code>.
+          </div>
+          <div class="proof">58 bank formats, hand-verified. Built for Horizons.</div>
+        </div>
+
+        <div class="stack">
+          <div class="ghost a" aria-hidden="true"><div class="gl" style="width:62%"></div><div class="gl" style="width:40%"></div></div>
+
+          <div class="panel" id="demo" aria-hidden="true">
+            <div class="kicker">LOOK SOMEONE UP</div>
+            <div class="stagewrap">
+              <div class="dstage" id="dstage1">
+                <div class="dfield">
+                  <span class="dlabel">Their LinkedIn</span>
+                  <div class="dinput mono" id="d_url" style="font-size:13.5px"><span id="d_url_t" class="ph">linkedin.com/in/</span><i class="caret"></i></div>
+                </div>
+                <div class="dfield">
+                  <span class="dlabel">Where they work</span>
+                  <div class="dinput" id="d_firm"><span id="d_firm_t" class="ph">Evercore, GS, Houlihan&hellip;</span><i class="caret"></i></div>
+                  <span class="dhint" id="d_hint">Name, nickname like PWP, or the domain.</span>
+                </div>
+                <div class="dbtn" id="d_btn">Find their email</div>
+              </div>
+
+              <div class="dstage dres" id="dstage2" hidden>
+                <div class="dmailrow">
+                  <div style="min-width:0">
+                    <div class="kicker" style="color:var(--faint);margin-bottom:5px">THEIR LIKELY EMAIL</div>
+                    <span class="mono dmail">john.doe@goldmanstanley.com</span>
+                  </div>
+                  <div><div class="dpct" id="d_pct">0%</div><div class="dverdict">Good odds</div></div>
+                </div>
+                <div class="ddraft"><b>Texas A&amp;M &rsquo;27 interested in Goldman Stanley</b>Hi John,
+
+I hope you are doing well. My name is Nikhil Prabhu. I am a senior at Texas A&amp;M University studying finance. I am interested in pursuing a career in investment banking at Goldman Stanley.
+
+If possible, would you be open to a brief call in the coming weeks? I would love to learn more about your experience and journey. I am happy to work with your schedule.
+
+Thanks,
+Nikhil Prabhu</div>
+                <div class="dsend" id="d_send">Send from your Gmail</div>
+              </div>
+
+              <div class="ctx" id="ctx">
+                <div class="ctxi dim">Undo<span>&#8984;Z</span></div>
+                <div class="ctxi dim">Cut<span>&#8984;X</span></div>
+                <div class="ctxi dim">Copy<span>&#8984;C</span></div>
+                <div class="ctxsep"></div>
+                <div class="ctxi" id="ctxPaste">Paste<span>&#8984;V</span></div>
+              </div>
+              <div class="ring" id="ring"></div>
+              <svg id="cursor" viewBox="0 0 21 25"><path d="M2 1.6l15.2 10-6.7 1.2 2.9 8-2.9 1.2-2.9-7.4L2 19.2z" fill="#fff" stroke="#1A1212" stroke-width="1.5" stroke-linejoin="round"/></svg>
+            </div>
+            <div class="tryhint">A sample run</div>
+          </div>
+
+          <div class="ghost b" aria-hidden="true"><div class="gl" style="width:48%"></div><div class="gl" style="width:70%"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== FIRST-RUN PROFILE ===== -->
+  <div id="viewProfile" hidden>
+    <div class="shell narrow wrap">
+      <h2>One more thing</h2>
+      <p class="lede">Signed in as <span class="mono" id="pf_email" style="font-weight:600;color:var(--text)"></span>. This is what your emails get written from.</p>
+      <form class="card" id="pfForm" novalidate>
+        <div class="two">
+          <label class="f" for="pf_name">Your name<input id="pf_name" type="text"></label>
+          <label class="f" for="pf_school">School<input id="pf_school" type="text" placeholder="Texas A&amp;M University"></label>
+        </div>
+        <div class="two">
+          <label class="f" for="pf_standing">Class standing<input id="pf_standing" type="text" placeholder="senior"></label>
+          <label class="f" for="pf_major">Major<input id="pf_major" type="text" placeholder="finance"></label>
+        </div>
+        <label class="f" for="pf_career">What are you recruiting for?
+          <select id="pf_career">
+            <option value="investment banking">Investment Banking</option>
+            <option value="private equity">Private Equity</option>
+            <option value="sales and trading">Sales &amp; Trading</option>
+            <option value="equity research">Equity Research</option>
+            <option value="venture capital">Venture Capital</option>
+            <option value="growth equity">Growth Equity</option>
+            <option value="hedge funds">Hedge Funds</option>
+            <option value="asset management">Asset Management</option>
+            <option value="management consulting">Management Consulting</option>
+            <option value="corporate finance">Corporate Finance</option>
+            <option value="restructuring">Restructuring</option>
+            <option value="__other">Other</option>
+          </select>
+        </label>
+        <label class="f" for="pf_other" id="pf_otherWrap" hidden>Tell us which
+          <input id="pf_other" type="text" placeholder="commodities trading">
+        </label>
+        <div>
+          <div style="font-size:14.5px;font-weight:600;margin-bottom:8px">Resume <span style="font-weight:400;color:var(--dim)">(optional)</span></div>
+          <div class="drop" id="pf_drop" role="button" tabindex="0">
+            <div class="dt" id="pf_dropT">Drop your resume here</div>
+            <div class="dd" id="pf_dropD">PDF works best. It never leaves this device.</div>
+          </div>
+          <input type="file" id="pf_file" accept=".pdf,.txt" class="vh">
+          <div class="hits" id="pf_hits" style="margin-top:12px"></div>
+          <div class="privacy" style="margin-top:12px">
+            <b>Your resume is read inside your browser and never uploaded.</b> There is no server in this app. Nothing about it is transmitted anywhere, and anything you tick below is only used to add one true sentence to your emails.
+          </div>
+        </div>
+        <div class="err" id="pf_err"></div>
+        <button class="go" type="submit">Save and start</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== APP ===== -->
+  <div id="viewApp" hidden>
+    <div class="shell narrow wrap">
+      <h2 id="ap_hello">Welcome back</h2>
+      <p class="lede" id="ap_sub"></p>
+
+      <div class="step">
+        <div class="stepn">1</div>
+        <div>
+          <div class="steph">Who are you emailing?</div>
+          <p class="stepsub">The name comes out of the URL. The firm decides the format.</p>
+          <div class="card">
+            <form id="form" autocomplete="off">
+              <label class="f" for="url">LinkedIn profile URL
+                <input id="url" class="mono" type="text" placeholder="linkedin.com/in/jane-smith-4a81b23" style="font-size:14px">
+              </label>
+              <label class="f" for="firm">Firm name
+                <input id="firm" type="text" list="firmlist" placeholder="Goldman Sachs, Evercore, Moelis...">
+                <span class="tip" id="firmHint">Name, nickname like PWP, or the domain.</span>
+              </label>
+              <datalist id="firmlist"></datalist>
+              <label class="f" for="dom" id="domWrap" hidden>Firm email domain
+                <input id="dom" class="mono" type="text" placeholder="firmname.com" style="font-size:14px">
+                <span class="tip">No confirmed format for this one, so everything comes back low.</span>
+              </label>
+              <div class="two" id="nameWrap" hidden>
+                <label class="f" for="fn">First name<input id="fn" type="text"></label>
+                <label class="f" for="ln">Last name<input id="ln" type="text"></label>
+              </div>
+              <button class="go" type="submit">Find their email</button>
+              <div style="text-align:center"><button class="textlnk" type="button" id="nameToggle">Type the name myself</button></div>
+            </form>
+          </div>
+          <div class="card" id="found" hidden></div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="stepn">2</div>
+        <div>
+          <div class="steph">Your email</div>
+          <p class="stepsub">Edit anything. This is what actually gets sent.</p>
+          <div class="card" id="noteCard" hidden></div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="stepn">3</div>
+        <div>
+          <div class="steph">Send it from your own inbox</div>
+          <p class="stepsub">Goes out from your own account and lands in your Sent folder.</p>
+          <div class="card" id="sendCard" hidden></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ==================================================================
+     CONFIG — replace this with your OAuth client ID. See SETUP.md
+     ================================================================== */
+  var CLIENT_ID = "PASTE_YOUR_CLIENT_ID_HERE";          // Google Cloud > Credentials
+  var MS_CLIENT_ID = "PASTE_YOUR_MICROSOFT_CLIENT_ID";  // Azure portal > App registrations
+
+  var SCOPES = "openid email profile https://www.googleapis.com/auth/gmail.send";
+  var MS_SCOPES = ["User.Read", "Mail.Send"];
+  /* ================================================================== */
+
+  var F=[["Goldman Sachs","GS","gs.com","first.last"],["J.P. Morgan","JPM","jpmorgan.com","first.last"],
+    ["Morgan Stanley","MS","morganstanley.com","first.last"],["Blackstone","","blackstone.com","first.last"],
+    ["Bank of America","BofA BAML","bofa.com","first.last"],["Barclays","","barclays.com","first.last"],
+    ["Deutsche Bank","DB","db.com","first.last"],["Citi","Citigroup","citi.com","first.last"],
+    ["UBS","","ubs.com","first.last"],["Wells Fargo","","wellsfargo.com","first.last"],
+    ["Lazard","LAZ","lazard.com","first.last"],["Perella Weinberg Partners","PWP","pwpartners.com","flast"],
+    ["Tudor Pickering & Holt","TPH","tphco.com","flast"],["Moelis & Company","Moelis","moelis.com","first.last"],
+    ["Evercore","EVR","evercore.com","first.last"],["PJT Partners","PJT","pjtpartners.com","first.last"],
+    ["Centerview Partners","CVP","centerview.com","flast"],["Rothschild & Co","","rothschildandco.com","first.last"],
+    ["Guggenheim Partners","Gugg","guggenheimpartners.com","first.last"],["Greenhill & Co","","greenhill.com","first.last"],
+    ["Houlihan Lokey","HL","hl.com","flast"],
+    ["Qatalyst Partners","Qatalyst","catalyst.com","first.last","Your list has this as catalyst.com. Check it isn't qatalyst.com before you send."],
+    ["LionTree Advisors","LionTree","liontree.com","flast"],["Jefferies","","jefferies.com","first.last"],
+    ["TD Securities","Cowen","tdsecurities.com","first.last"],["Cain Brothers","Cain","cainbrothers.com","flast"],
+    ["Macquarie Group","MacCap","macquarie.com","first.last"],["Solomon Partners","PJ Solomon","solomonpartners.com","first.last"],
+    ["Nomura","","nomura.com","first.last"],["Nomura Greentech","","nomuragreentech.com","first.last"],
+    ["RBC Capital Markets","RBC","rbccm.com","first.last"],["HSBC","","hsbc.com","first.last"],
+    ["BNP Paribas","BNP","us.bnpparibas.com","first.last"],["Raymond James","","raymondjames.com","first.last"],
+    ["Mizuho","","mizuhogroup.com","first.last"],["FT Partners","FTP","ftpartners.com","first.last"],
+    ["Stifel","","stifel.com","lastf"],["William Blair","WB","williamblair.com","flast"],
+    ["BMO Capital Markets","BMO","bmo.com","first.last"],["Piper Sandler","","psc.com","first.last"],
+    ["Oppenheimer & Co","Opco","opco.com","first.last"],["Societe Generale","SocGen","sgcib.com","first.last"],
+    ["Cantor Fitzgerald","Cantor","cantor.com","first.last"],["TripleTree","Triple Tree","triple-tree.com","flast"],
+    ["Capital One","","capitalone.com","first.last"],["Kipps DeSanto","","kippsdesanto.com","flast"],
+    ["Harris Williams","HW","harriswilliams.com","flast"],["Credit Agricole","CACIB","ca-cib.com","first.last"],
+    ["Scotiabank","","scotiabank.com","first.last"],["Ducera Partners","Ducera","ducerapartners.com","flast"],
+    ["Shea & Co","Shea","shea-co.com","flast"],["WoodRock","","woodrock.com","flast"],
+    ["PPHB","","pphb.com","flast"],["Santander","","santander.us","first.last"],
+    ["Main Street Capital","","mainstcapital.com","flast"],["Cascadia Capital","","cascadiacapital.com","flast"],
+    ["Lincoln International","Lincoln","lincolninternational.com","flast"],
+    ["Stephens","","","varies"],["Truist","","","varies"],["Baird","Robert W. Baird","","varies"]];
+  var FIRMS=F.map(function(r){return {name:r[0],alias:r[1]||"",domain:r[2]||"",pattern:r[3],note:r[4]||""};});
+  var PATTERNS=["first.last","flast","lastf","f.last","firstlast","first_last","first"];
+  var PL={"first.last":"first.last","flast":"flast","lastf":"lastf","f.last":"f.last","firstlast":"firstlast","first_last":"first_last","first":"first"};
+
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
+  function norm(s){ return String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z]/g,""); }
+  function cap(s){ return s?s.charAt(0).toUpperCase()+s.slice(1):""; }
+  function clamp(lo,hi,v){ return Math.max(lo,Math.min(hi,v)); }
+
+  var tt;
+  function toast(m){
+    var o=document.querySelector(".toast"); if(o) o.remove();
+    var e=document.createElement("div"); e.className="toast"; e.textContent=m;
+    e.setAttribute("role","status"); document.body.appendChild(e);
+    clearTimeout(tt); tt=setTimeout(function(){e.remove();},3200);
+  }
+
+  /* ================= auth =================
+     Two providers behind one small interface. `me.provider` is "google" or
+     "microsoft", and everything downstream only ever calls needToken() and
+     sendMail(), so adding a third later is one more block, not a rewrite. */
+  var me=null, profile=loadProfile();
+  var gTokenClient=null, gToken=null, gExpiry=0, pendingAfterToken=null;
+  var msalApp=null, msAccount=null;
+
+  function loadProfile(){ try{var r=localStorage.getItem("rsr_profile"); if(r) return JSON.parse(r);}catch(e){} return null; }
+  function saveProfile(p){ try{localStorage.setItem("rsr_profile",JSON.stringify(p));}catch(e){} }
+
+  function googleReady(){ return CLIENT_ID && CLIENT_ID.indexOf("PASTE_YOUR") !== 0; }
+  function msReady(){ return MS_CLIENT_ID && MS_CLIENT_ID.indexOf("PASTE_YOUR") !== 0; }
+
+  function checkConfig(){
+    var g=googleReady(), m=msReady();
+    $("cfgwarn").hidden = (g || m);
+    $("gsi").disabled = !g;
+    $("msi").disabled = !m;
+    if(!g) $("gsi").title = "Google client ID not set yet";
+    if(!m) $("msi").title = "Microsoft client ID not set yet";
+  }
+
+  /* ---------------- Google ---------------- */
+  function initGoogle(){
+    if(!googleReady()) return;
+    if(!window.google || !google.accounts || !google.accounts.oauth2){ setTimeout(initGoogle,300); return; }
+    gTokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: CLIENT_ID,
+      scope: SCOPES,
+      callback: function(resp){
+        if(resp.error){ toast("Google said no: "+resp.error); return; }
+        gToken = resp.access_token;
+        gExpiry = Date.now() + ((resp.expires_in||3600)-60)*1000;
+        if(pendingAfterToken){ var f=pendingAfterToken; pendingAfterToken=null; f(); }
+        else fetchGoogleMe();
+      }
+    });
+  }
+  function fetchGoogleMe(){
+    fetch("https://www.googleapis.com/oauth2/v3/userinfo",{headers:{Authorization:"Bearer "+gToken}})
+      .then(function(r){ if(!r.ok) throw new Error("userinfo "+r.status); return r.json(); })
+      .then(function(u){
+        me={ provider:"google", email:u.email, name:u.name||"" };
+        afterConnect();
+      })
+      .catch(function(err){ toast("Couldn't read your Google account. "+err.message); });
+  }
+
+  /* ---------------- Microsoft ---------------- */
+  function initMsal(){
+    if(!msReady() || !window.msal) return null;
+    if(msalApp) return msalApp;
+    msalApp = new msal.PublicClientApplication({
+      auth: {
+        clientId: MS_CLIENT_ID,
+        // "common" lets both personal Outlook.com and university accounts in.
+        authority: "https://login.microsoftonline.com/common",
+        redirectUri: window.location.origin + window.location.pathname
+      },
+      cache: { cacheLocation: "localStorage", storeAuthStateInCookie: false }
+    });
+    return msalApp;
+  }
+  function connectMicrosoft(){
+    var app=initMsal();
+    if(!app){ toast("Microsoft isn't set up yet. Check SETUP.md."); return; }
+    app.loginPopup({ scopes: MS_SCOPES, prompt: "select_account" })
+      .then(function(res){
+        msAccount = res.account;
+        me = {
+          provider: "microsoft",
+          email: res.account.username,
+          name: res.account.name || ""
+        };
+        afterConnect();
+      })
+      .catch(function(err){
+        if(String(err).indexOf("user_cancelled")>=0) return;
+        toast("Microsoft sign-in failed: "+(err.errorMessage||err.message||err));
+      });
+  }
+  function msToken(){
+    var app=initMsal();
+    if(!app||!msAccount) return Promise.reject(new Error("Not connected to Outlook."));
+    return app.acquireTokenSilent({ scopes: MS_SCOPES, account: msAccount })
+      .then(function(r){ return r.accessToken; })
+      .catch(function(){
+        // Silent refresh failed, usually consent expiry. Ask once, visibly.
+        return app.acquireTokenPopup({ scopes: MS_SCOPES, account: msAccount })
+          .then(function(r){ return r.accessToken; });
+      });
+  }
+
+  /* ---------------- shared ---------------- */
+  function afterConnect(){
+    paintNav();
+    if(profile && profile.email===me.email) enterApp();
+    else startProfile();
+  }
+  function needToken(then){
+    if(!me){ toast("Connect an inbox first."); return; }
+    if(me.provider==="google"){
+      if(gToken && Date.now() < gExpiry){ then(); return; }
+      if(!gTokenClient){ toast("Google isn't set up yet."); return; }
+      pendingAfterToken = then;
+      gTokenClient.requestAccessToken({prompt: gToken ? "" : "consent"});
+    } else {
+      then();
+    }
+  }
+  function paintNav(){
+    $("navIn").hidden = !me;
+    if(me){
+      $("navName").textContent = (me.name||me.email).split(" ")[0];
+      $("navAv").textContent = (me.name||me.email).split(" ").map(function(p){return p.charAt(0);}).join("").slice(0,2).toUpperCase();
+      $("navWhere").textContent = me.provider==="google" ? "Gmail" : "Outlook";
+    }
+  }
+
+  $("gsi").addEventListener("click",function(){
+    if(!googleReady()){ checkConfig(); return; }
+    if(!gTokenClient){ initGoogle(); toast("Google is still loading. Try again in a second."); return; }
+    pendingAfterToken = null;               // the callback will run fetchGoogleMe
+    gTokenClient.requestAccessToken({ prompt: "consent" });
+  });
+  $("msi").addEventListener("click",connectMicrosoft);
+
+  $("signoutBtn").addEventListener("click",function(){
+    if(me && me.provider==="google" && gToken && window.google && google.accounts && google.accounts.oauth2){
+      try{ google.accounts.oauth2.revoke(gToken,function(){}); }catch(e){}
+    }
+    if(me && me.provider==="microsoft" && msalApp && msAccount){
+      try{ msalApp.logoutPopup({account:msAccount}); }catch(e){}
+    }
+    gToken=null; gExpiry=0; msAccount=null; me=null;
+    paintNav(); show("viewHero"); toast("Signed out");
+  });
+  $("homeBtn").addEventListener("click",function(){ me?enterApp():show("viewHero"); });
+
+  /* ================= views ================= */
+  var VIEWS=["viewHero","viewProfile","viewApp"];
+  function show(v){
+    VIEWS.forEach(function(x){ $(x).hidden=(x!==v); });
+    window.scrollTo(0,0);
+    // Only run the hero animation while the hero is on screen.
+    if(typeof setDemo === "function") setDemo(v === "viewHero");
+  }
+
+  /* ================= profile ================= */
+  var resumeHits=[];
+  $("pf_career").addEventListener("change",function(){
+    $("pf_otherWrap").hidden = this.value!=="__other";
+    if(this.value==="__other") $("pf_other").focus();
+  });
+  function pickHits(text){
+    var lines=text.split(/\n|•|\|/).map(function(l){return l.replace(/\s+/g," ").trim();})
+      .filter(function(l){ return l.length>22 && l.length<150; });
+    var kw=/(intern|analyst|fellow|research|president|captain|founder|treasurer|chair|award|scholar|club|fund|society|launched|built|led|managed|modeled|valuation)/i;
+    var out=[],seen={};
+    lines.forEach(function(l){
+      if(out.length>=5||!kw.test(l)) return;
+      var k=l.toLowerCase().slice(0,40); if(seen[k]) return; seen[k]=1; out.push(l);
+    });
+    return out;
+  }
+  function renderHits(){
+    $("pf_hits").innerHTML=resumeHits.map(function(h,i){
+      return '<label class="hit"><input type="checkbox" data-h="'+i+'"><span>'+esc(h)+'</span></label>';
+    }).join("");
+  }
+  function handleFile(file){
+    if(!file) return;
+    $("pf_dropT").textContent=file.name;
+    $("pf_dropD").textContent="Reading it here in your browser…";
+    var ext=(file.name.split(".").pop()||"").toLowerCase();
+    if(ext==="pdf" && window.pdfjsLib){
+      try{ pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"; }catch(e){}
+      var fr=new FileReader();
+      fr.onload=function(){
+        pdfjsLib.getDocument({data:new Uint8Array(fr.result)}).promise.then(function(pdf){
+          var jobs=[]; for(var i=1;i<=Math.min(pdf.numPages,3);i++) jobs.push(pdf.getPage(i).then(function(p){return p.getTextContent();}));
+          return Promise.all(jobs);
+        }).then(function(pages){
+          var text=pages.map(function(pg){
+            var line="",out=[],lastY=null;
+            pg.items.forEach(function(it){
+              var y=it.transform&&it.transform[5];
+              if(lastY!==null&&Math.abs(y-lastY)>4){ out.push(line); line=""; }
+              line+=it.str+" "; lastY=y;
+            });
+            out.push(line); return out.join("\n");
+          }).join("\n");
+          resumeHits=pickHits(text); renderHits();
+          $("pf_dropD").textContent="Read locally. "+text.length.toLocaleString()+" characters, never uploaded.";
+        }).catch(function(){ $("pf_dropD").textContent="Couldn’t read the text, but it never left your device."; });
+      };
+      fr.readAsArrayBuffer(file);
+    } else {
+      var f2=new FileReader();
+      f2.onload=function(){ resumeHits=pickHits(String(f2.result)); renderHits();
+        $("pf_dropD").textContent="Read locally, never uploaded."; };
+      f2.readAsText(file);
+    }
+  }
+  $("pf_drop").addEventListener("click",function(){ $("pf_file").click(); });
+  $("pf_drop").addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){e.preventDefault();$("pf_file").click();} });
+  $("pf_file").addEventListener("change",function(){ handleFile(this.files&&this.files[0]); });
+  ["dragenter","dragover"].forEach(function(t){ $("pf_drop").addEventListener(t,function(e){e.preventDefault();this.classList.add("over");}); });
+  ["dragleave","drop"].forEach(function(t){ $("pf_drop").addEventListener(t,function(e){e.preventDefault();this.classList.remove("over");}); });
+  $("pf_drop").addEventListener("drop",function(e){ handleFile(e.dataTransfer&&e.dataTransfer.files[0]); });
+
+  function startProfile(){
+    $("pf_email").textContent=me.email;
+    if(!$("pf_name").value) $("pf_name").value=me.name||"";
+    if(profile){
+      $("pf_school").value=profile.school||""; $("pf_standing").value=profile.standing||"";
+      $("pf_major").value=profile.major||"";
+    }
+    show("viewProfile");
+  }
+  $("pfForm").addEventListener("submit",function(e){
+    e.preventDefault();
+    var sel=$("pf_career").value;
+    var p={
+      email: me.email,
+      name: $("pf_name").value.trim(),
+      school: $("pf_school").value.trim(),
+      standing: $("pf_standing").value.trim(),
+      major: $("pf_major").value.trim(),
+      career: sel==="__other" ? $("pf_other").value.trim() : sel,
+      highlights: []
+    };
+    if(!p.name||!p.school||!p.career){ $("pf_err").textContent="Name, school and career are needed for the email to read right."; return; }
+    Array.prototype.forEach.call(document.querySelectorAll("#pf_hits input:checked"),function(cb){
+      p.highlights.push(resumeHits[+cb.dataset.h]);
+    });
+    profile=p; saveProfile(p); $("pf_err").textContent=""; enterApp();
+  });
+
+  function enterApp(){
+    $("ap_hello").textContent="Welcome, "+(profile.name||me.name||"").split(" ")[0]+".";
+    $("ap_sub").innerHTML=esc(profile.school)+" &middot; recruiting for "+esc(profile.career)+
+      " &middot; sending from <span class=\"mono\" style=\"color:var(--text);font-weight:600\">"+esc(me.email)+"</span>";
+    show("viewApp");
+  }
+
+  /* ================= lookup engine ================= */
+  var st={result:null};
+  function build(p,first,last,domain){
+    var f=norm(first),l=norm(last);
+    if(!f||!l||!domain) return "";
+    switch(p){
+      case "flast": return f.charAt(0)+l+"@"+domain;
+      case "lastf": return l+f.charAt(0)+"@"+domain;
+      case "f.last": return f.charAt(0)+"."+l+"@"+domain;
+      case "firstlast": return f+l+"@"+domain;
+      case "first_last": return f+"_"+l+"@"+domain;
+      case "first": return f+"@"+domain;
+      default: return f+"."+l+"@"+domain;
+    }
+  }
+  function parseSlug(raw){
+    var m=String(raw||"").match(/\/in\/([A-Za-z0-9\-_%]+)/);
+    var slug=m?m[1]:String(raw||"").trim().replace(/^\/+|\/+$/g,"");
+    if(!slug) return {quality:"none",slug:""};
+    slug=slug.toLowerCase();
+    var core=slug.replace(/-[a-z0-9]*\d[a-z0-9]*$/,"");
+    var parts=core.split("-").filter(Boolean);
+    if(parts.length===2&&/^[a-z]+$/.test(parts[0])&&/^[a-z]+$/.test(parts[1]))
+      return {quality:"clean",slug:slug,first:cap(parts[0]),last:cap(parts[1])};
+    if(parts.length>=3) return {quality:"ambiguous",slug:slug,first:cap(parts[0]),last:parts.slice(1).map(cap).join("-")};
+    return {quality:"unparsed",slug:slug,first:"",last:""};
+  }
+  function resolveFirm(text){
+    var t=String(text||"").trim(); if(!t) return null;
+    var tl=t.toLowerCase();
+    var x=FIRMS.filter(function(f){return f.name.toLowerCase()===tl;})[0]; if(x) return x;
+    x=FIRMS.filter(function(f){return f.alias&&f.alias.toLowerCase().split(/\s+/).indexOf(tl)>=0;})[0]; if(x) return x;
+    x=FIRMS.filter(function(f){return f.domain&&f.domain===tl;})[0]; if(x) return x;
+    var sub=FIRMS.filter(function(f){return f.name.toLowerCase().indexOf(tl)>=0||(f.alias&&f.alias.toLowerCase().indexOf(tl)>=0);});
+    if(sub.length===1) return sub[0];
+    if(sub.length>1){ var s=sub.filter(function(f){return f.name.toLowerCase().indexOf(tl)===0;}); if(s.length===1) return s[0]; }
+    if(/^[a-z0-9.\-]+\.[a-z]{2,}$/.test(tl)) return {name:t,alias:"",domain:tl.replace(/^www\./,""),pattern:"varies",note:""};
+    return {name:t,alias:"",domain:"",pattern:"varies",note:""};
+  }
+  function score(firm,name,manual){
+    var s=firm.pattern==="varies"?38:88;
+    if(manual) s+=4;
+    else if(name.quality==="ambiguous") s-=18;
+    else if(name.quality==="unparsed") s-=25;
+    if(/[-'\s]/.test(name.last||"")) s-=10;
+    return clamp(15,95,s);
+  }
+  function plainWord(s,firm){
+    if(s>=80) return "Good odds. Confirmed format at "+firm.name+" and the name read cleanly, so send it without much worry.";
+    if(s>=55) return "Worth sending, but read it twice. Check the spelling against their profile first.";
+    return "Treat this as a guess. If it really matters, find the address another way, or send it and be ready for a bounce.";
+  }
+  function reasons(firm,name,manual){
+    var o=[];
+    if(firm.pattern!=="varies") o.push("<b>+</b><span>"+esc(PL[firm.pattern])+"@"+esc(firm.domain)+" is a confirmed format at "+esc(firm.name)+".</span>");
+    else o.push("<b>&minus;</b><span>No confirmed format for "+esc(firm.name)+". Everything below is ranked by how common the pattern is in general.</span>");
+    if(manual) o.push("<b>+</b><span>You typed the name yourself instead of letting the URL guess it.</span>");
+    else if(name.quality==="clean") o.push("<b>+</b><span>The profile URL split cleanly into two name parts.</span>");
+    else if(name.quality==="ambiguous") o.push("<b>&minus;</b><span>The URL has three or more parts, so where the first name ends is a guess.</span>");
+    else if(name.quality==="unparsed") o.push("<b>&minus;</b><span>That's a custom URL handle, so no name could be read out of it.</span>");
+    if(/[-'\s]/.test(name.last||"")) o.push("<b>&minus;</b><span>Compound last name. This is where formats break most often.</span>");
+    o.push("<b>!</b><span>Almost every bank here runs Microsoft 365, which accepts mail for addresses that don't exist. Nothing confirms the mailbox is real.</span>");
+    return o;
+  }
+  function alternates(firm,name){
+    var o=[],rest=100-score(firm,name,false);
+    var w=firm.pattern==="varies"?[0.34,0.26,0.19,0.12]:[0.5,0.3,0.14],i=0;
+    PATTERNS.forEach(function(p){
+      if(p===firm.pattern||i>=w.length) return;
+      var a=build(p,name.first,name.last,firm.domain); if(!a) return;
+      o.push({a:a,p:Math.max(1,Math.round(rest*w[i]))}); i++;
+    });
+    return o;
+  }
+  function draft(firm,name){
+    var a=profile;
+    var extra=(a.highlights&&a.highlights.length)?" "+a.highlights[0].replace(/\.$/,"")+".":"";
+    var standing=a.standing?a.standing+" ":"student ";
+    return {
+      subject:a.school.replace(/^The /,"").replace(/ University$/,"")+" student interested in "+firm.name,
+      body:"Hi "+(name.first||"there")+",\n\n"+
+        "I hope you are doing well. My name is "+a.name+". I am a "+standing+"at "+a.school+
+        (a.major?" studying "+a.major:"")+". I am interested in pursuing a career in "+a.career+" at "+firm.name+"."+extra+"\n\n"+
+        "If possible, would you be open to a brief call in the coming weeks? I would love to learn more about your experience and journey. I am happy to work with your schedule.\n\n"+
+        "Thanks,\n"+a.name
+    };
+  }
+
+  function renderFound(r){
+    var b=r.score>=80?{k:"h",t:"Good odds"}:r.score>=55?{k:"m",t:"Check it first"}:{k:"l",t:"Rough guess"};
+    var el=$("found");
+    el.innerHTML=
+      '<div class="who"><span class="nm">'+esc(((r.name.first||"")+" "+(r.name.last||"")).trim())+'</span>'+
+        '<span class="fm">'+esc(r.firm.name)+'</span></div>'+
+      '<div class="mailtop"><div class="mono addr">'+esc(r.email)+'</div>'+
+        '<div class="gauge"><div class="pct">'+r.score+'%</div>'+
+          '<div><div class="band '+b.k+'">'+b.t+'</div><div class="bandsub">confidence</div></div></div></div>'+
+      '<p class="plain '+b.k+'" style="margin:0">'+esc(plainWord(r.score,r.firm))+'</p>'+
+      (r.firm.note?'<p class="flag" style="margin:0">'+esc(r.firm.note)+'</p>':'')+
+      '<details><summary>Why that number</summary>'+
+        '<ul class="why">'+r.reasons.map(function(x){return '<li>'+x+'</li>';}).join("")+'</ul>'+
+        (r.alts.length?'<div class="alts"><div class="kicker" style="color:var(--faint);margin-bottom:9px">IF IT BOUNCES, TRY</div>'+
+          r.alts.map(function(a){return '<div class="altrow"><span class="mono">'+esc(a.a)+'</span><span class="mono">'+a.p+'%</span></div>';}).join("")+'</div>':'')+
+      '</details>';
+    el.hidden=false;
+  }
+  function renderNote(r){
+    var el=$("noteCard");
+    el.innerHTML=
+      '<div class="subj"><span class="kicker">SUBJECT</span><label class="vh" for="subj">Subject</label>'+
+        '<input id="subj" type="text" value="'+esc(r.draft.subject)+'"></div>'+
+      '<label class="vh" for="body">Email body</label><textarea id="body">'+esc(r.draft.body)+'</textarea>';
+    el.hidden=false;
+  }
+  function renderSend(r){
+    var el=$("sendCard");
+    el.innerHTML=
+      '<div class="to">To <span class="mono">'+esc(r.email)+'</span> &nbsp;&middot;&nbsp; from <span class="mono">'+esc(me.email)+'</span></div>'+
+      '<div class="acts">'+
+        '<button class="go" type="button" id="sendBtn" style="width:auto;padding:0 30px">Send it</button>'+
+        '<button class="pill" type="button" id="copyBtn">Copy instead</button>'+
+      '</div>'+
+      '<p class="foot"><b>This sends for real.</b> It leaves your own account, shows up in your Sent folder, and replies come to your inbox. '+
+      'There is no undo. Read it once more first.</p>';
+    el.hidden=false;
+    $("sendBtn").addEventListener("click",doSend);
+    $("copyBtn").addEventListener("click",function(){
+      var t=$("subj").value+"\n\n"+$("body").value;
+      if(navigator.clipboard) navigator.clipboard.writeText(t).then(function(){toast("Copied");});
+    });
+  }
+
+  /* ---- the actual Gmail send ---- */
+  function b64url(str){
+    var bytes=new TextEncoder().encode(str), bin="";
+    for(var i=0;i<bytes.length;i++) bin+=String.fromCharCode(bytes[i]);
+    return btoa(bin).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+  }
+  function encHeader(s){
+    /* RFC 2047 for any non-ASCII in the subject */
+    return /^[\x20-\x7E]*$/.test(s) ? s : "=?UTF-8?B?"+btoa(String.fromCharCode.apply(null,new TextEncoder().encode(s)))+"?=";
+  }
+  function rawMessage(to,from,fromName,subject,body){
+    return b64url([
+      "From: "+(fromName?'"'+fromName.replace(/"/g,"")+'" <'+from+">":from),
+      "To: "+to,
+      "Subject: "+encHeader(subject),
+      "MIME-Version: 1.0",
+      'Content-Type: text/plain; charset="UTF-8"',
+      "Content-Transfer-Encoding: 8bit",
+      "",
+      body
+    ].join("\r\n"));
+  }
+  /* Gmail wants a base64url RFC 2822 blob. Graph wants JSON. Same call either way. */
+  function sendGmail(to,su,bo){
+    return fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send",{
+      method:"POST",
+      headers:{ Authorization:"Bearer "+gToken, "Content-Type":"application/json" },
+      body: JSON.stringify({ raw: rawMessage(to, me.email, profile.name, su, bo) })
+    }).then(function(r){
+      if(r.status===401){ gToken=null; gExpiry=0; throw new Error("Session expired. Press send again."); }
+      if(!r.ok) return r.json().then(function(j){ throw new Error((j.error&&j.error.message)||("Gmail returned "+r.status)); });
+      return true;
+    });
+  }
+  function sendGraph(to,su,bo){
+    return msToken().then(function(tok){
+      return fetch("https://graph.microsoft.com/v1.0/me/sendMail",{
+        method:"POST",
+        headers:{ Authorization:"Bearer "+tok, "Content-Type":"application/json" },
+        body: JSON.stringify({
+          message:{
+            subject: su,
+            body: { contentType:"Text", content: bo },
+            toRecipients: [{ emailAddress:{ address: to } }]
+          },
+          saveToSentItems: true
+        })
+      });
+    }).then(function(r){
+      // Graph answers 202 Accepted with an empty body on success.
+      if(r.status===202 || r.ok) return true;
+      return r.json().then(function(j){
+        throw new Error((j.error&&j.error.message)||("Outlook returned "+r.status));
+      });
+    });
+  }
+
+  function doSend(){
+    var btn=$("sendBtn"); if(!st.result) return;
+    var to=st.result.email, su=$("subj").value, bo=$("body").value;
+    if(!to){ toast("No address to send to."); return; }
+    btn.disabled=true; btn.textContent="Sending…";
+
+    var where = me.provider==="google" ? "Gmail" : "Outlook";
+    function done(){
+      $("sendCard").innerHTML='<div class="sentbox">Sent to '+esc(to)+'. It is in your '+where+' Sent folder now.</div>'+
+        '<button class="pill" type="button" id="againBtn" style="align-self:flex-start">Look up someone else</button>';
+      $("againBtn").addEventListener("click",function(){
+        $("found").hidden=true; $("noteCard").hidden=true; $("sendCard").hidden=true;
+        $("url").value=""; $("firm").value=""; $("url").focus();
+        window.scrollTo({top:0,behavior:"smooth"});
+      });
+      toast("Sent");
+    }
+    function failed(err){
+      btn.disabled=false; btn.textContent="Send it";
+      toast(err.message||String(err));
+    }
+
+    if(me.provider==="google"){
+      needToken(function(){ sendGmail(to,su,bo).then(done).catch(failed); });
+    } else {
+      sendGraph(to,su,bo).then(done).catch(failed);
+    }
+  }
+
+  function run(){
+    var manual=!$("nameWrap").hidden;
+    var name=parseSlug($("url").value);
+    if(manual){
+      var fn=$("fn").value.trim(),ln=$("ln").value.trim();
+      if(fn||ln) name={quality:name.quality==="none"?"clean":name.quality,slug:name.slug,first:fn,last:ln};
+    }
+    var firm=resolveFirm($("firm").value);
+    if(!firm){ toast("Which firm? Start typing and pick one."); $("firm").focus(); return; }
+    if(!firm.domain){
+      var d=$("dom").value.trim().toLowerCase().replace(/^https?:\/\//,"").replace(/^www\./,"").replace(/\/.*$/,"");
+      if(!d){ $("domWrap").hidden=false; toast("No domain on file for "+firm.name+". Add it below."); $("dom").focus(); return; }
+      firm=Object.assign({},firm,{domain:d});
+    }
+    if(!name.first||!name.last){
+      $("nameWrap").hidden=false;
+      $("nameToggle").textContent="Read the name from the URL instead";
+      $("fn").value=name.first||""; $("ln").value=name.last||"";
+      toast("Couldn't read a name from that link. Type it in.");
+      $(name.first?"ln":"fn").focus(); return;
+    }
+    var s=score(firm,name,manual);
+    st.result={firm:firm,name:name,score:s,email:build(firm.pattern,name.first,name.last,firm.domain),
+      reasons:reasons(firm,name,manual),alts:alternates(firm,name),draft:draft(firm,name)};
+    renderFound(st.result); renderNote(st.result); renderSend(st.result);
+    $("found").scrollIntoView({behavior:"smooth",block:"center"});
+  }
+
+  $("form").addEventListener("submit",function(e){e.preventDefault();run();});
+  $("nameToggle").addEventListener("click",function(){
+    var w=$("nameWrap"); w.hidden=!w.hidden;
+    this.textContent=w.hidden?"Type the name myself":"Read the name from the URL instead";
+    if(!w.hidden){ var n=parseSlug($("url").value);
+      if(n.first)$("fn").value=n.first; if(n.last)$("ln").value=n.last; $("fn").focus(); }
+  });
+  $("firm").addEventListener("input",function(){
+    var f=resolveFirm(this.value),h=$("firmHint");
+    $("domWrap").hidden=!(f&&!f.domain);
+    if(!this.value.trim()){ h.textContent="Name, nickname like PWP, or the domain."; return; }
+    if(f&&f.domain&&f.pattern!=="varies") h.textContent="Confirmed: "+PL[f.pattern]+"@"+f.domain;
+    else if(f&&f.pattern==="varies"&&f.domain) h.textContent="Format varies here, so expect a low number.";
+    else h.textContent="Not on the list. Add their domain and we'll rank the candidates.";
+  });
+  $("firmlist").innerHTML=FIRMS.map(function(f){
+    return '<option value="'+esc(f.name)+'" label="'+esc(f.name+(f.alias?" ("+f.alias.split(/\s+/)[0]+")":""))+'"></option>';
+  }).join("");
+
+  /* ================= animated hero demo ================= */
+  var timers=[], demoOn=true;
+  var reduceMotion=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var demo=$("demo"), cursor=$("cursor"), ring=$("ring"), ctx=$("ctx"), ctxPaste=$("ctxPaste");
+  var s1=$("dstage1"), s2=$("dstage2");
+  var dUrl=$("d_url"), dUrlT=$("d_url_t"), dFirm=$("d_firm"), dFirmT=$("d_firm_t");
+  var dHint=$("d_hint"), dBtn=$("d_btn"), dPct=$("d_pct"), dSend=$("d_send");
+
+  function at(ms,fn){ timers.push(setTimeout(fn,ms)); }
+  function clearAll(){ timers.forEach(clearTimeout); timers=[]; }
+
+  function pos(el,ox,oy){
+    var w=demo.querySelector(".stagewrap").getBoundingClientRect(), r=el.getBoundingClientRect();
+    return {x:r.left-w.left+(ox==null?Math.min(r.width-26,110):ox), y:r.top-w.top+(oy==null?r.height/2:oy)};
+  }
+  function moveClick(el,ox,oy,after){
+    if(!demoOn) return;
+    var p=pos(el,ox,oy);
+    cursor.style.transform="translate("+p.x+"px,"+p.y+"px)";
+    at(580,function(){
+      if(!demoOn) return;
+      ring.style.transform="translate("+(p.x+3)+"px,"+(p.y+4)+"px)";
+      ring.classList.remove("go"); void ring.offsetWidth; ring.classList.add("go");
+      if(after) after(p);
+    });
+  }
+  function typeInto(node,box,text,speed){
+    if(!demoOn) return;
+    box.classList.add("on","typing"); node.classList.remove("ph"); node.textContent="";
+    var i=0;
+    (function stepFn(){
+      if(!demoOn) return;
+      node.textContent=text.slice(0,++i);
+      if(i<text.length) at(speed,stepFn); else box.classList.remove("typing");
+    })();
+  }
+  function countTo(node,target,ms){
+    var t0=null;
+    function frame(ts){
+      if(!demoOn) return;
+      if(typeof ts!=="number"){ requestAnimationFrame(frame); return; }
+      if(t0===null) t0=ts;
+      var k=clamp(0,1,(ts-t0)/ms);
+      node.textContent=Math.round(target*(1-Math.pow(1-k,3)))+"%";
+      if(k<1) requestAnimationFrame(frame); else node.textContent=target+"%";
+    }
+    requestAnimationFrame(frame);
+  }
+  function resetDemo(){
+    s2.hidden=true; s1.hidden=false;
+    dUrlT.textContent="linkedin.com/in/"; dUrlT.className="ph";
+    dFirmT.innerHTML="Evercore, GS, Houlihan&hellip;"; dFirmT.className="ph";
+    dHint.textContent="Name, nickname like PWP, or the domain."; dHint.className="dhint";
+    dUrl.classList.remove("on","flash","typing"); dFirm.classList.remove("on","flash","typing");
+    dBtn.classList.remove("press"); ctx.classList.remove("show"); ctxPaste.classList.remove("hi");
+    dSend.className="dsend"; dSend.textContent="Send from your Gmail";
+    dPct.textContent="0%";
+    cursor.style.transform="translate(260px,404px)";
+  }
+  function loop(){
+    if(!demoOn) return;
+    clearAll(); resetDemo();
+
+    /* right-click the URL field, context menu opens at the cursor tip */
+    at(650,function(){
+      moveClick(dUrl,132,20,function(p){
+        if(!demoOn) return;
+        ctx.style.transform="translate("+(p.x+1)+"px,"+(p.y+1)+"px)";
+        ctx.classList.add("show");
+      });
+    });
+
+    /* move down to Paste and click it */
+    at(1950,function(){
+      moveClick(ctxPaste,30,null,function(){
+        if(!demoOn) return;
+        ctxPaste.classList.add("hi");
+        at(280,function(){
+          if(!demoOn) return;
+          ctx.classList.remove("show"); ctxPaste.classList.remove("hi");
+          dUrl.classList.add("on"); dUrlT.className="";
+          dUrlT.textContent="linkedin.com/in/john-doe-8b41c29";
+          dUrl.classList.remove("flash"); void dUrl.offsetWidth; dUrl.classList.add("flash");
+        });
+      });
+    });
+
+    /* click the firm field and type it out */
+    at(3550,function(){
+      dUrl.classList.remove("on");
+      moveClick(dFirm,110,26,function(){ at(240,function(){ typeInto(dFirmT,dFirm,"Goldman Stanley",68); }); });
+    });
+
+    at(5500,function(){
+      if(!demoOn) return;
+      dHint.textContent="Confirmed: first.last@goldmanstanley.com"; dHint.className="dhint ok";
+    });
+
+    at(5900,function(){
+      dFirm.classList.remove("on");
+      moveClick(dBtn,null,null,function(){
+        at(60,function(){ if(demoOn) dBtn.classList.add("press"); });
+        at(300,function(){
+          if(!demoOn) return;
+          dBtn.classList.remove("press");
+          s1.hidden=true; s2.hidden=false;
+          s2.classList.remove("fade"); void s2.offsetWidth; s2.classList.add("fade");
+          countTo(dPct,99,950);
+        });
+      });
+    });
+
+    at(8150,function(){
+      moveClick(dSend,null,null,function(){
+        at(60,function(){ if(demoOn) dSend.classList.add("press"); });
+        at(330,function(){
+          if(!demoOn) return;
+          dSend.classList.remove("press"); dSend.classList.add("sent");
+          dSend.textContent="✓  Sent to john.doe@goldmanstanley.com";
+        });
+      });
+    });
+
+    at(11700,loop);
+  }
+
+  /* called by show() so the loop stops once someone signs in */
+  function setDemo(on){
+    if(reduceMotion){ demoOn=false; clearAll(); resetDemo(); return; }
+    if(on===demoOn) return;
+    demoOn=on;
+    if(on) at(400,loop); else clearAll();
+  }
+
+  if(reduceMotion){ demoOn=false; resetDemo(); }
+  else at(500,loop);
+
+  checkConfig();
+  initGoogle();
+  initMsal();
+})();
+</script>
+</body>
+</html>
