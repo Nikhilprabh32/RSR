@@ -6,7 +6,6 @@
 <title>Ready, Set, Recruit</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="https://alcdn.msauth.net/browser/2.35.0/js/msal-browser.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
   :root{
@@ -165,8 +164,6 @@
   .gbtn.cta:first-of-type{margin-top:30px}
   .gbtn[disabled]{opacity:.45;cursor:not-allowed}
   .gbtn[disabled]:hover{border-color:var(--border)}
-  .via{font-size:12px;font-weight:600;color:var(--faint);border-left:1px solid var(--border);
-    padding-left:9px;margin-left:2px}
   .pitch .perm{max-width:420px}
   .stack{position:relative}
   .ghost{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:16px 20px;
@@ -258,7 +255,7 @@
       <button class="logo" id="homeBtn" type="button"><i></i>Ready, Set, Recruit</button>
       <div class="grow"></div>
       <div id="navIn" hidden style="display:flex;align-items:center;gap:12px">
-        <span class="chip"><span class="av" id="navAv">?</span><span id="navName"></span><span class="via" id="navWhere"></span></span>
+        <span class="chip"><span class="av" id="navAv">?</span><span id="navName"></span></span>
         <button class="navlnk" id="signoutBtn" type="button">Sign out</button>
       </div>
     </nav>
@@ -275,15 +272,11 @@
             <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#4285F4" d="M45.1 24.5c0-1.6-.1-2.8-.4-4H24v7.3h12.1c-.2 2-1.6 5-4.5 7l-.1.3 6.5 5 .5.1c4.1-3.8 6.6-9.4 6.6-15.7"/><path fill="#34A853" d="M24 46c5.9 0 10.9-2 14.5-5.3l-6.9-5.4c-1.8 1.3-4.3 2.2-7.6 2.2-5.8 0-10.7-3.8-12.5-9.1l-.3.1-6.7 5.2-.1.3C7.9 41 15.4 46 24 46"/><path fill="#FBBC05" d="M11.5 28.4c-.5-1.4-.7-2.9-.7-4.4s.3-3 .7-4.4v-.3l-6.8-5.3-.2.1C2.9 17 2 20.4 2 24s.9 7 2.5 9.9z"/><path fill="#EA4335" d="M24 10.5c4.1 0 6.9 1.8 8.5 3.3l6.2-6C34.9 4.3 29.9 2 24 2 15.4 2 7.9 7 4.5 14.1l7 5.5c1.8-5.3 6.7-9.1 12.5-9.1"/></svg>
             Continue with Google
           </button>
-          <button class="gbtn cta alt" id="msi" type="button">
-            <svg viewBox="0 0 23 23" aria-hidden="true"><path fill="#F25022" d="M1 1h10v10H1z"/><path fill="#7FBA00" d="M12 1h10v10H12z"/><path fill="#00A4EF" d="M1 12h10v10H1z"/><path fill="#FFB900" d="M12 12h10v10H12z"/></svg>
-            Continue with Outlook
-          </button>
           <div class="perm">
             <b>Google will ask for two things.</b> Your email address, which is how we know who you are, and permission to send mail on your behalf. That's it. We can't read your inbox, we don't ask to, and the permission only covers messages you write here and press send on yourself.
           </div>
           <div class="cfgwarn" id="cfgwarn" hidden>
-            <b>Not configured yet.</b> Open <code>index.html</code> and replace <code>976700874860-7es6vhm67m8924orllh62fost8sjmr9s.apps.googleusercontent.com</code> and <code>PASTE_YOUR_MICROSOFT_CLIENT_ID</code> with the client IDs from Google Cloud and the Azure portal. Setting up just one is fine, the other button simply stays disabled. See <code>SETUP.md</code>.
+            <b>Not configured yet.</b> Open <code>index.html</code> and replace <code>PASTE_YOUR_CLIENT_ID_HERE</code> with the OAuth client ID from your Google Cloud project. See <code>SETUP.md</code>.
           </div>
           <div class="proof">58 bank formats, hand-verified. Built for Horizons.</div>
         </div>
@@ -445,7 +438,7 @@ Nikhil Prabhu</div>
       <div class="step">
         <div class="stepn">3</div>
         <div>
-          <div class="steph">Send it from your own inbox</div>
+          <div class="steph">Send it from your Gmail</div>
           <p class="stepsub">Goes out from your own account and lands in your Sent folder.</p>
           <div class="card" id="sendCard" hidden></div>
         </div>
@@ -461,11 +454,8 @@ Nikhil Prabhu</div>
   /* ==================================================================
      CONFIG — replace this with your OAuth client ID. See SETUP.md
      ================================================================== */
-  var CLIENT_ID = "PASTE_YOUR_CLIENT_ID_HERE";          // Google Cloud > Credentials
-  var MS_CLIENT_ID = "PASTE_YOUR_MICROSOFT_CLIENT_ID";  // Azure portal > App registrations
-
+  var CLIENT_ID = "PASTE_YOUR_CLIENT_ID_HERE";   // Google Cloud > Credentials > OAuth client ID
   var SCOPES = "openid email profile https://www.googleapis.com/auth/gmail.send";
-  var MS_SCOPES = ["User.Read", "Mail.Send"];
   /* ================================================================== */
 
   var F=[["Goldman Sachs","GS","gs.com","first.last"],["J.P. Morgan","JPM","jpmorgan.com","first.last"],
@@ -517,32 +507,21 @@ Nikhil Prabhu</div>
     clearTimeout(tt); tt=setTimeout(function(){e.remove();},3200);
   }
 
-  /* ================= auth =================
-     Two providers behind one small interface. `me.provider` is "google" or
-     "microsoft", and everything downstream only ever calls needToken() and
-     sendMail(), so adding a third later is one more block, not a rewrite. */
+  /* ================= auth ================= */
   var me=null, profile=loadProfile();
   var gTokenClient=null, gToken=null, gExpiry=0, pendingAfterToken=null;
-  var msalApp=null, msAccount=null;
 
   function loadProfile(){ try{var r=localStorage.getItem("rsr_profile"); if(r) return JSON.parse(r);}catch(e){} return null; }
   function saveProfile(p){ try{localStorage.setItem("rsr_profile",JSON.stringify(p));}catch(e){} }
 
-  function googleReady(){ return CLIENT_ID && CLIENT_ID.indexOf("PASTE_YOUR") !== 0; }
-  function msReady(){ return MS_CLIENT_ID && MS_CLIENT_ID.indexOf("PASTE_YOUR") !== 0; }
-
+  function configured(){ return CLIENT_ID && CLIENT_ID.indexOf("PASTE_YOUR") !== 0; }
   function checkConfig(){
-    var g=googleReady(), m=msReady();
-    $("cfgwarn").hidden = (g || m);
-    $("gsi").disabled = !g;
-    $("msi").disabled = !m;
-    if(!g) $("gsi").title = "Google client ID not set yet";
-    if(!m) $("msi").title = "Microsoft client ID not set yet";
+    $("cfgwarn").hidden = configured();
+    $("gsi").disabled = !configured();
   }
 
-  /* ---------------- Google ---------------- */
   function initGoogle(){
-    if(!googleReady()) return;
+    if(!configured()) return;
     if(!window.google || !google.accounts || !google.accounts.oauth2){ setTimeout(initGoogle,300); return; }
     gTokenClient = google.accounts.oauth2.initTokenClient({
       client_id: CLIENT_ID,
@@ -552,107 +531,51 @@ Nikhil Prabhu</div>
         gToken = resp.access_token;
         gExpiry = Date.now() + ((resp.expires_in||3600)-60)*1000;
         if(pendingAfterToken){ var f=pendingAfterToken; pendingAfterToken=null; f(); }
-        else fetchGoogleMe();
+        else fetchMe();
       }
     });
   }
-  function fetchGoogleMe(){
+
+  /* Access tokens last about an hour. When one lapses we ask Google for
+     another, silently if they have already consented. */
+  function needToken(then){
+    if(gToken && Date.now() < gExpiry){ then(); return; }
+    if(!gTokenClient){ toast("Google is still loading. Try again in a second."); return; }
+    pendingAfterToken = then;
+    gTokenClient.requestAccessToken({ prompt: gToken ? "" : "consent" });
+  }
+
+  function fetchMe(){
     fetch("https://www.googleapis.com/oauth2/v3/userinfo",{headers:{Authorization:"Bearer "+gToken}})
       .then(function(r){ if(!r.ok) throw new Error("userinfo "+r.status); return r.json(); })
       .then(function(u){
-        me={ provider:"google", email:u.email, name:u.name||"" };
-        afterConnect();
+        me={ email:u.email, name:u.name||"" };
+        paintNav();
+        if(profile && profile.email===me.email) enterApp();
+        else startProfile();
       })
       .catch(function(err){ toast("Couldn't read your Google account. "+err.message); });
   }
 
-  /* ---------------- Microsoft ---------------- */
-  function initMsal(){
-    if(!msReady() || !window.msal) return null;
-    if(msalApp) return msalApp;
-    msalApp = new msal.PublicClientApplication({
-      auth: {
-        clientId: MS_CLIENT_ID,
-        // "common" lets both personal Outlook.com and university accounts in.
-        authority: "https://login.microsoftonline.com/common",
-        redirectUri: window.location.origin + window.location.pathname
-      },
-      cache: { cacheLocation: "localStorage", storeAuthStateInCookie: false }
-    });
-    return msalApp;
-  }
-  function connectMicrosoft(){
-    var app=initMsal();
-    if(!app){ toast("Microsoft isn't set up yet. Check SETUP.md."); return; }
-    app.loginPopup({ scopes: MS_SCOPES, prompt: "select_account" })
-      .then(function(res){
-        msAccount = res.account;
-        me = {
-          provider: "microsoft",
-          email: res.account.username,
-          name: res.account.name || ""
-        };
-        afterConnect();
-      })
-      .catch(function(err){
-        if(String(err).indexOf("user_cancelled")>=0) return;
-        toast("Microsoft sign-in failed: "+(err.errorMessage||err.message||err));
-      });
-  }
-  function msToken(){
-    var app=initMsal();
-    if(!app||!msAccount) return Promise.reject(new Error("Not connected to Outlook."));
-    return app.acquireTokenSilent({ scopes: MS_SCOPES, account: msAccount })
-      .then(function(r){ return r.accessToken; })
-      .catch(function(){
-        // Silent refresh failed, usually consent expiry. Ask once, visibly.
-        return app.acquireTokenPopup({ scopes: MS_SCOPES, account: msAccount })
-          .then(function(r){ return r.accessToken; });
-      });
-  }
-
-  /* ---------------- shared ---------------- */
-  function afterConnect(){
-    paintNav();
-    if(profile && profile.email===me.email) enterApp();
-    else startProfile();
-  }
-  function needToken(then){
-    if(!me){ toast("Connect an inbox first."); return; }
-    if(me.provider==="google"){
-      if(gToken && Date.now() < gExpiry){ then(); return; }
-      if(!gTokenClient){ toast("Google isn't set up yet."); return; }
-      pendingAfterToken = then;
-      gTokenClient.requestAccessToken({prompt: gToken ? "" : "consent"});
-    } else {
-      then();
-    }
-  }
   function paintNav(){
     $("navIn").hidden = !me;
     if(me){
       $("navName").textContent = (me.name||me.email).split(" ")[0];
       $("navAv").textContent = (me.name||me.email).split(" ").map(function(p){return p.charAt(0);}).join("").slice(0,2).toUpperCase();
-      $("navWhere").textContent = me.provider==="google" ? "Gmail" : "Outlook";
     }
   }
 
   $("gsi").addEventListener("click",function(){
-    if(!googleReady()){ checkConfig(); return; }
+    if(!configured()){ checkConfig(); return; }
     if(!gTokenClient){ initGoogle(); toast("Google is still loading. Try again in a second."); return; }
-    pendingAfterToken = null;               // the callback will run fetchGoogleMe
+    pendingAfterToken = null;
     gTokenClient.requestAccessToken({ prompt: "consent" });
   });
-  $("msi").addEventListener("click",connectMicrosoft);
-
   $("signoutBtn").addEventListener("click",function(){
-    if(me && me.provider==="google" && gToken && window.google && google.accounts && google.accounts.oauth2){
+    if(gToken && window.google && google.accounts && google.accounts.oauth2){
       try{ google.accounts.oauth2.revoke(gToken,function(){}); }catch(e){}
     }
-    if(me && me.provider==="microsoft" && msalApp && msAccount){
-      try{ msalApp.logoutPopup({account:msAccount}); }catch(e){}
-    }
-    gToken=null; gExpiry=0; msAccount=null; me=null;
+    gToken=null; gExpiry=0; me=null;
     paintNav(); show("viewHero"); toast("Signed out");
   });
   $("homeBtn").addEventListener("click",function(){ me?enterApp():show("viewHero"); });
@@ -886,7 +809,7 @@ Nikhil Prabhu</div>
         '<button class="go" type="button" id="sendBtn" style="width:auto;padding:0 30px">Send it</button>'+
         '<button class="pill" type="button" id="copyBtn">Copy instead</button>'+
       '</div>'+
-      '<p class="foot"><b>This sends for real.</b> It leaves your own account, shows up in your Sent folder, and replies come to your inbox. '+
+      '<p class="foot"><b>This sends for real.</b> It leaves your Gmail account, shows up in your Sent folder, and replies come to your inbox. '+
       'There is no undo. Read it once more first.</p>';
     el.hidden=false;
     $("sendBtn").addEventListener("click",doSend);
@@ -918,68 +841,35 @@ Nikhil Prabhu</div>
       body
     ].join("\r\n"));
   }
-  /* Gmail wants a base64url RFC 2822 blob. Graph wants JSON. Same call either way. */
-  function sendGmail(to,su,bo){
-    return fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send",{
-      method:"POST",
-      headers:{ Authorization:"Bearer "+gToken, "Content-Type":"application/json" },
-      body: JSON.stringify({ raw: rawMessage(to, me.email, profile.name, su, bo) })
-    }).then(function(r){
-      if(r.status===401){ gToken=null; gExpiry=0; throw new Error("Session expired. Press send again."); }
-      if(!r.ok) return r.json().then(function(j){ throw new Error((j.error&&j.error.message)||("Gmail returned "+r.status)); });
-      return true;
-    });
-  }
-  function sendGraph(to,su,bo){
-    return msToken().then(function(tok){
-      return fetch("https://graph.microsoft.com/v1.0/me/sendMail",{
-        method:"POST",
-        headers:{ Authorization:"Bearer "+tok, "Content-Type":"application/json" },
-        body: JSON.stringify({
-          message:{
-            subject: su,
-            body: { contentType:"Text", content: bo },
-            toRecipients: [{ emailAddress:{ address: to } }]
-          },
-          saveToSentItems: true
-        })
-      });
-    }).then(function(r){
-      // Graph answers 202 Accepted with an empty body on success.
-      if(r.status===202 || r.ok) return true;
-      return r.json().then(function(j){
-        throw new Error((j.error&&j.error.message)||("Outlook returned "+r.status));
-      });
-    });
-  }
-
   function doSend(){
     var btn=$("sendBtn"); if(!st.result) return;
     var to=st.result.email, su=$("subj").value, bo=$("body").value;
     if(!to){ toast("No address to send to."); return; }
-    btn.disabled=true; btn.textContent="Sending…";
+    btn.disabled=true; btn.textContent="Sending\u2026";
 
-    var where = me.provider==="google" ? "Gmail" : "Outlook";
-    function done(){
-      $("sendCard").innerHTML='<div class="sentbox">Sent to '+esc(to)+'. It is in your '+where+' Sent folder now.</div>'+
-        '<button class="pill" type="button" id="againBtn" style="align-self:flex-start">Look up someone else</button>';
-      $("againBtn").addEventListener("click",function(){
-        $("found").hidden=true; $("noteCard").hidden=true; $("sendCard").hidden=true;
-        $("url").value=""; $("firm").value=""; $("url").focus();
-        window.scrollTo({top:0,behavior:"smooth"});
+    needToken(function(){
+      fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send",{
+        method:"POST",
+        headers:{ Authorization:"Bearer "+gToken, "Content-Type":"application/json" },
+        body: JSON.stringify({ raw: rawMessage(to, me.email, profile.name, su, bo) })
+      }).then(function(r){
+        if(r.status===401){ gToken=null; gExpiry=0; throw new Error("Session expired. Press send again."); }
+        if(!r.ok) return r.json().then(function(j){ throw new Error((j.error&&j.error.message)||("Gmail returned "+r.status)); });
+        return r.json();
+      }).then(function(){
+        $("sendCard").innerHTML='<div class="sentbox">Sent to '+esc(to)+'. It is in your Gmail Sent folder now.</div>'+
+          '<button class="pill" type="button" id="againBtn" style="align-self:flex-start">Look up someone else</button>';
+        $("againBtn").addEventListener("click",function(){
+          $("found").hidden=true; $("noteCard").hidden=true; $("sendCard").hidden=true;
+          $("url").value=""; $("firm").value=""; $("url").focus();
+          window.scrollTo({top:0,behavior:"smooth"});
+        });
+        toast("Sent");
+      }).catch(function(err){
+        btn.disabled=false; btn.textContent="Send it";
+        toast(err.message);
       });
-      toast("Sent");
-    }
-    function failed(err){
-      btn.disabled=false; btn.textContent="Send it";
-      toast(err.message||String(err));
-    }
-
-    if(me.provider==="google"){
-      needToken(function(){ sendGmail(to,su,bo).then(done).catch(failed); });
-    } else {
-      sendGraph(to,su,bo).then(done).catch(failed);
-    }
+    });
   }
 
   function run(){
@@ -1168,7 +1058,6 @@ Nikhil Prabhu</div>
 
   checkConfig();
   initGoogle();
-  initMsal();
 })();
 </script>
 </body>
