@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Ready, Set, Recruit</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap">
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
   :root{
@@ -48,6 +48,7 @@
     padding-bottom:50px;min-height:100vh}
   .shell{max-width:1180px;margin:0 auto;padding-inline:24px}
   .narrow{max-width:640px}
+  .mid{max-width:820px}
   nav{display:flex;align-items:center;gap:12px;padding-block:20px}
   .logo{display:flex;align-items:center;gap:9px;font-weight:800;font-size:18px;letter-spacing:-.03em;
     background:none;border:none;cursor:pointer;padding:0;color:inherit}
@@ -55,6 +56,10 @@
   .grow{flex-grow:1}
   .navlnk{background:none;border:none;padding:8px 4px;font-size:15px;font-weight:600;color:var(--dim);cursor:pointer}
   .navlnk:hover{color:var(--text)}
+  .navlnk.on{color:var(--text)}
+  .navlnk .dot{display:inline-block;min-width:18px;height:18px;line-height:18px;border-radius:9px;
+    background:var(--accent);color:var(--on-accent);font-size:11px;font-weight:800;text-align:center;
+    margin-left:6px;padding:0 5px}
   .chip{display:inline-flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--border);
     border-radius:999px;padding:5px 14px 5px 5px;font-size:14px;font-weight:600;box-shadow:var(--soft)}
   .chip img{width:28px;height:28px;border-radius:50%}
@@ -157,7 +162,80 @@
   .cfgwarn code{font-family:'DM Mono',monospace;background:rgba(0,0,0,.07);padding:2px 6px;border-radius:5px}
 
   .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;background:var(--text);color:var(--bg);
-    padding:12px 20px;border-radius:999px;font-size:14.5px;font-weight:600;z-index:60;box-shadow:var(--card)}
+    padding:12px 20px;border-radius:999px;font-size:14.5px;font-weight:600;z-index:60;box-shadow:var(--card);
+    max-width:90vw;text-align:center}
+
+  /* ---------- contacts ---------- */
+  .ctbar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:22px}
+  .ctsearch{flex-grow:1;min-width:190px;height:46px;border-radius:12px;background:var(--surface2);
+    border:1.5px solid transparent;padding:0 14px;font-size:15px;outline:none;color:var(--text)}
+  .ctsearch:focus{border-color:var(--accent);background:var(--surface)}
+  .ctfilter{height:46px;border-radius:12px;background:var(--surface2);border:1.5px solid transparent;
+    padding:0 34px 0 13px;font-size:14.5px;font-weight:600;outline:none;appearance:none;-webkit-appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239A8B87' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 13px center}
+  .ctrow{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px 18px;
+    box-shadow:var(--soft);margin-top:12px}
+  .cthead{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:flex-start;justify-content:space-between}
+  .ctname{font-size:17px;font-weight:700;letter-spacing:-.025em}
+  .ctfirm{font-size:14px;color:var(--dim);font-weight:500;margin-left:8px}
+  .ctmail{font-size:13.5px;color:var(--dim);margin-top:3px;word-break:break-all}
+  .ctmeta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+  .tag{font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:999px;letter-spacing:.04em;white-space:nowrap}
+  .tag.s-sent{background:var(--low-bg);color:var(--low)}
+  .tag.s-replied,.tag.s-call_booked{background:var(--high-bg);color:var(--high)}
+  .tag.s-bounced{background:var(--mid-bg);color:var(--mid)}
+  .tag.s-closed{background:var(--surface2);color:var(--faint)}
+  .tag.due{background:var(--accent);color:var(--on-accent)}
+  select.ctstat{height:36px;border-radius:10px;background-color:var(--surface2);color:var(--dim);
+    border:1.5px solid transparent;padding:0 30px 0 12px;font-size:13px;font-weight:700;letter-spacing:.01em;
+    outline:none;appearance:none;-webkit-appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239A8B87' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 11px center;cursor:pointer}
+  select.ctstat:focus{border-color:var(--accent)}
+  /* the control is also the status badge, so it carries the colour itself */
+  select.ctstat.s-replied,select.ctstat.s-call_booked{background-color:var(--high-bg);color:var(--high)}
+  select.ctstat.s-bounced{background-color:var(--mid-bg);color:var(--mid)}
+  select.ctstat.s-closed{background-color:var(--surface2);color:var(--faint)}
+  select.ctstat option{color:var(--text);background:var(--surface);font-weight:500}
+  .ctnotes{width:100%;margin-top:11px;min-height:58px;resize:vertical;background:var(--surface2);
+    border:1.5px solid transparent;border-radius:12px;padding:11px 13px;font-size:14px;line-height:1.55;
+    outline:none;font-family:inherit;color:var(--text)}
+  .ctnotes:focus{border-color:var(--accent);background:var(--surface)}
+  .mini{height:36px;padding:0 15px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface);
+    font-size:13.5px;font-weight:600;cursor:pointer;color:var(--text);white-space:nowrap}
+  .mini:hover{border-color:var(--accent-line)}
+  .mini.solid{background:var(--accent);color:var(--on-accent);border-color:transparent}
+  .mini.solid:hover{background:var(--accent-hover)}
+  .empty{text-align:center;padding:44px 22px;color:var(--dim);font-size:15.5px;background:var(--surface);
+    border:1px solid var(--border);border-radius:18px;margin-top:20px}
+  .empty b{display:block;color:var(--text);font-size:18px;font-weight:800;letter-spacing:-.025em;margin-bottom:8px}
+  .capline{font-size:13.5px;color:var(--faint);margin-top:10px}
+  .capline b{color:var(--mid);font-weight:700}
+  .dueband{background:var(--accent-soft);border:1px solid var(--accent-line);border-radius:18px;
+    padding:18px 20px;margin-top:22px}
+  .dueband h3{font-size:16.5px;font-weight:800;letter-spacing:-.025em;color:var(--accent-ink)}
+  .dueband .sub{font-size:13.5px;color:var(--dim);margin-top:4px}
+  .duerow{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;
+    padding:11px 0 0;border-top:1px solid var(--accent-line);margin-top:11px;font-size:14.5px}
+  .duerow .dn{font-weight:700}
+  .duerow .dd2{color:var(--dim);font-size:13.5px}
+  .stats{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
+  .stat{flex:1 1 118px;background:var(--surface);border:1px solid var(--border);border-radius:14px;
+    padding:14px 16px;box-shadow:var(--soft)}
+  .stat .n{font-size:26px;font-weight:800;letter-spacing:-.04em;line-height:1.1;font-variant-numeric:tabular-nums}
+  .stat .l{font-size:12px;letter-spacing:.07em;font-weight:700;color:var(--faint);margin-top:2px}
+  .reconnect{background:var(--mid-bg);color:var(--mid);padding:14px 16px;border-radius:14px;font-size:14px;
+    line-height:1.6;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+  .reconnect b{font-weight:700}
+  .spin{display:inline-block;width:15px;height:15px;border:2px solid var(--border);border-top-color:var(--accent);
+    border-radius:50%;animation:sp .7s linear infinite;vertical-align:-3px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .loading{color:var(--faint);font-size:15px;padding:28px 0;text-align:center}
+
+  .sitefoot{border-top:1px solid var(--border);margin-top:40px;padding:22px 0 8px;font-size:14px;color:var(--faint)}
+  .sitefoot a{color:var(--faint);margin-right:18px;text-decoration:none}
+  .sitefoot a:hover{color:var(--text)}
 
   /* ---------- animated demo ---------- */
   .gbtn.cta{margin-top:14px;max-width:340px}
@@ -230,7 +308,7 @@
   @media (max-width:640px){ #demo .stagewrap{min-height:424px} }
   @media (prefers-reduced-motion:reduce){
     #cursor{transition:none}
-    .fade,.ring.go,.dinput.flash,.dinput.typing .caret{animation:none}
+    .fade,.ring.go,.dinput.flash,.dinput.typing .caret,.spin{animation:none}
   }
 
   @media (max-width:900px){
@@ -245,6 +323,8 @@
     .step{grid-template-columns:36px minmax(0,1fr);gap:14px}
     .stepn{width:36px;height:36px;font-size:16px}
     .steph{font-size:18px;padding-top:5px}
+    nav{gap:8px}
+    .navlnk{font-size:14px}
   }
 </style>
 </head>
@@ -254,7 +334,9 @@
     <nav>
       <button class="logo" id="homeBtn" type="button"><i></i>Ready, Set, Recruit</button>
       <div class="grow"></div>
-      <div id="navIn" hidden style="display:flex;align-items:center;gap:12px">
+      <div id="navIn" hidden style="display:flex;align-items:center;gap:14px">
+        <button class="navlnk" id="navSend" type="button">Send</button>
+        <button class="navlnk" id="navContacts" type="button">Contacts<span class="dot" id="navDue" hidden>0</span></button>
         <span class="chip"><span class="av" id="navAv">?</span><span id="navName"></span></span>
         <button class="navlnk" id="signoutBtn" type="button">Sign out</button>
       </div>
@@ -267,7 +349,7 @@
       <div class="hero">
         <div class="pitch">
           <h1>Land the coffee chat.<br><em>Then the offer.</em></h1>
-          <p class="sub">Paste a banker's LinkedIn, name the firm, and send a real email from your own Gmail in about ten seconds.</p>
+          <p class="sub">Paste a banker's LinkedIn, name the firm, and send a real email from your own Gmail in about ten seconds. Every send is logged so you know who you have already talked to.</p>
           <button class="gbtn cta" id="gsi" type="button">
             <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#4285F4" d="M45.1 24.5c0-1.6-.1-2.8-.4-4H24v7.3h12.1c-.2 2-1.6 5-4.5 7l-.1.3 6.5 5 .5.1c4.1-3.8 6.6-9.4 6.6-15.7"/><path fill="#34A853" d="M24 46c5.9 0 10.9-2 14.5-5.3l-6.9-5.4c-1.8 1.3-4.3 2.2-7.6 2.2-5.8 0-10.7-3.8-12.5-9.1l-.3.1-6.7 5.2-.1.3C7.9 41 15.4 46 24 46"/><path fill="#FBBC05" d="M11.5 28.4c-.5-1.4-.7-2.9-.7-4.4s.3-3 .7-4.4v-.3l-6.8-5.3-.2.1C2.9 17 2 20.4 2 24s.9 7 2.5 9.9z"/><path fill="#EA4335" d="M24 10.5c4.1 0 6.9 1.8 8.5 3.3l6.2-6C34.9 4.3 29.9 2 24 2 15.4 2 7.9 7 4.5 14.1l7 5.5c1.8-5.3 6.7-9.1 12.5-9.1"/></svg>
             Continue with Google
@@ -276,9 +358,9 @@
             <b>Google will ask for two things.</b> Your email address, which is how we know who you are, and permission to send mail on your behalf. That's it. We can't read your inbox, we don't ask to, and the permission only covers messages you write here and press send on yourself.
           </div>
           <div class="cfgwarn" id="cfgwarn" hidden>
-            <b>Not configured yet.</b> Open <code>index.html</code> and replace <code>976700874860-7es6vhm67m8924orllh62fost8sjmr9s.apps.googleusercontent.com</code> with the OAuth client ID from your Google Cloud project. See <code>SETUP.md</code>.
+            <b>Not configured yet.</b> Open <code>index.html</code> and fill in <code>SUPABASE_URL</code> and <code>SUPABASE_KEY</code> at the top of the script. See <code>SUPABASE.md</code>.
           </div>
-          <div class="proof">58 bank formats, hand-verified. Built for Horizons.</div>
+          <div class="proof">Hand-verified formats for 58 banks. Built for Horizons.</div>
         </div>
 
         <div class="stack">
@@ -335,6 +417,10 @@ Nikhil Prabhu</div>
           <div class="ghost b" aria-hidden="true"><div class="gl" style="width:48%"></div><div class="gl" style="width:70%"></div></div>
         </div>
       </div>
+
+      <div class="sitefoot">
+        <a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a><a href="mailto:support@readysetrecruit.com">Contact</a>
+      </div>
     </div>
   </div>
 
@@ -380,20 +466,22 @@ Nikhil Prabhu</div>
           <input type="file" id="pf_file" accept=".pdf,.txt" class="vh">
           <div class="hits" id="pf_hits" style="margin-top:12px"></div>
           <div class="privacy" style="margin-top:12px">
-            <b>Your resume is read inside your browser and never uploaded.</b> There is no server in this app. Nothing about it is transmitted anywhere, and anything you tick below is only used to add one true sentence to your emails.
+            <b>Your resume is read inside your browser and the file is never uploaded.</b> Only the short lines you tick below get saved to your account, and only so one true sentence can be added to your emails. The file itself is discarded when you close this tab.
           </div>
         </div>
         <div class="err" id="pf_err"></div>
-        <button class="go" type="submit">Save and start</button>
+        <button class="go" type="submit" id="pf_save">Save and start</button>
       </form>
     </div>
   </div>
 
-  <!-- ===== APP ===== -->
+  <!-- ===== SEND ===== -->
   <div id="viewApp" hidden>
     <div class="shell narrow wrap">
       <h2 id="ap_hello">Welcome back</h2>
       <p class="lede" id="ap_sub"></p>
+      <div class="capline" id="ap_cap"></div>
+      <div id="ap_reconnect" hidden style="margin-top:16px"></div>
 
       <div class="step">
         <div class="stepn">1</div>
@@ -439,9 +527,43 @@ Nikhil Prabhu</div>
         <div class="stepn">3</div>
         <div>
           <div class="steph">Send it from your Gmail</div>
-          <p class="stepsub">Goes out from your own account and lands in your Sent folder.</p>
+          <p class="stepsub">Goes out from your own account, lands in your Sent folder, and gets logged to your contacts.</p>
           <div class="card" id="sendCard" hidden></div>
         </div>
+      </div>
+
+      <div class="sitefoot">
+        <a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a><a href="mailto:support@readysetrecruit.com">Contact</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== CONTACTS ===== -->
+  <div id="viewContacts" hidden>
+    <div class="shell mid wrap">
+      <h2>Your contacts</h2>
+      <p class="lede">Everyone you have emailed through here, newest first. Statuses are yours to set, because we cannot read your inbox to work them out.</p>
+
+      <div class="stats" id="ct_stats"></div>
+      <div id="ct_due"></div>
+
+      <div class="ctbar">
+        <input class="ctsearch" id="ct_q" type="search" placeholder="Search a name, firm or address" aria-label="Search contacts">
+        <select class="ctfilter" id="ct_f" aria-label="Filter by status">
+          <option value="">All statuses</option>
+          <option value="sent">Waiting on a reply</option>
+          <option value="replied">Replied</option>
+          <option value="call_booked">Call booked</option>
+          <option value="closed">Closed</option>
+          <option value="bounced">Bounced</option>
+        </select>
+        <button class="mini" id="ct_refresh" type="button">Refresh</button>
+      </div>
+
+      <div id="ct_list"><div class="loading"><span class="spin"></span></div></div>
+
+      <div class="sitefoot">
+        <a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a><a href="mailto:support@readysetrecruit.com">Contact</a>
       </div>
     </div>
   </div>
@@ -452,144 +574,233 @@ Nikhil Prabhu</div>
   "use strict";
 
   /* ==================================================================
-     CONFIG — replace this with your OAuth client ID. See SETUP.md
+     CONFIG — both of these are public by design. The publishable key
+     identifies the project; Row Level Security is what protects the data.
+     See SUPABASE.md.
      ================================================================== */
-  var CLIENT_ID = "976700874860-7es6vhm67m8924orllh62fost8sjmr9s.apps.googleusercontent.com";   // Google Cloud > Credentials > OAuth client ID
-  var SCOPES = "openid email profile https://www.googleapis.com/auth/gmail.send";
+  var SUPABASE_URL = "https://fltmusfodkjnbcuhxove.supabase.co";
+  var SUPABASE_KEY = "sb_publishable_SiaQ2xBpBlVE9d8a5_32vg_Pf3mPmEb";
+  var GMAIL_SCOPE  = "https://www.googleapis.com/auth/gmail.send";
   /* ================================================================== */
 
-  var F=[["Goldman Sachs","GS","gs.com","first.last"],["J.P. Morgan","JPM","jpmorgan.com","first.last"],
+  var sb = null;
+  try {
+    if (window.supabase && window.supabase.createClient && /^https:\/\/.+\.supabase\.co$/.test(SUPABASE_URL))
+      sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  } catch(e){ sb = null; }
+
+  /* Fallback firm list. The real one comes from the firm_formats table on
+     sign-in, which is the copy that learns from bounces. This one exists so
+     the app still works if the database is unreachable.
+     Aliases are pipe separated so multi-word ones survive. */
+  var F=[["Goldman Sachs","GS","gs.com","first.last"],["J.P. Morgan","JPM|JPMorgan","jpmorgan.com","first.last"],
     ["Morgan Stanley","MS","morganstanley.com","first.last"],["Blackstone","","blackstone.com","first.last"],
-    ["Bank of America","BofA BAML","bofa.com","first.last"],["Barclays","","barclays.com","first.last"],
+    ["Bank of America","BofA|BAML","bofa.com","first.last"],["Barclays","","barclays.com","first.last"],
     ["Deutsche Bank","DB","db.com","first.last"],["Citi","Citigroup","citi.com","first.last"],
     ["UBS","","ubs.com","first.last"],["Wells Fargo","","wellsfargo.com","first.last"],
     ["Lazard","LAZ","lazard.com","first.last"],["Perella Weinberg Partners","PWP","pwpartners.com","flast"],
     ["Tudor Pickering & Holt","TPH","tphco.com","flast"],["Moelis & Company","Moelis","moelis.com","first.last"],
     ["Evercore","EVR","evercore.com","first.last"],["PJT Partners","PJT","pjtpartners.com","first.last"],
-    ["Centerview Partners","CVP","centerview.com","flast"],["Rothschild & Co","","rothschildandco.com","first.last"],
-    ["Guggenheim Partners","Gugg","guggenheimpartners.com","first.last"],["Greenhill & Co","","greenhill.com","first.last"],
+    ["Centerview Partners","CVP|Centerview","centerview.com","flast"],["Rothschild & Co","Rothschild","rothschildandco.com","first.last"],
+    ["Guggenheim Partners","Gugg","guggenheimpartners.com","first.last"],["Greenhill & Co","Greenhill","greenhill.com","first.last"],
     ["Houlihan Lokey","HL","hl.com","flast"],
     ["Qatalyst Partners","Qatalyst","catalyst.com","first.last","Your list has this as catalyst.com. Check it isn't qatalyst.com before you send."],
     ["LionTree Advisors","LionTree","liontree.com","flast"],["Jefferies","","jefferies.com","first.last"],
-    ["TD Securities","Cowen","tdsecurities.com","first.last"],["Cain Brothers","Cain","cainbrothers.com","flast"],
-    ["Macquarie Group","MacCap","macquarie.com","first.last"],["Solomon Partners","PJ Solomon","solomonpartners.com","first.last"],
-    ["Nomura","","nomura.com","first.last"],["Nomura Greentech","","nomuragreentech.com","first.last"],
+    ["TD Securities","Cowen|TD","tdsecurities.com","first.last"],["Cain Brothers","Cain","cainbrothers.com","flast"],
+    ["Macquarie Group","MacCap|Macquarie","macquarie.com","first.last"],["Solomon Partners","PJ Solomon","solomonpartners.com","first.last"],
+    ["Nomura","","nomura.com","first.last"],["Nomura Greentech","Greentech","nomuragreentech.com","first.last"],
     ["RBC Capital Markets","RBC","rbccm.com","first.last"],["HSBC","","hsbc.com","first.last"],
-    ["BNP Paribas","BNP","us.bnpparibas.com","first.last"],["Raymond James","","raymondjames.com","first.last"],
+    ["BNP Paribas","BNP","us.bnpparibas.com","first.last"],["Raymond James","RJ","raymondjames.com","first.last"],
     ["Mizuho","","mizuhogroup.com","first.last"],["FT Partners","FTP","ftpartners.com","first.last"],
-    ["Stifel","","stifel.com","lastf"],["William Blair","WB","williamblair.com","flast"],
-    ["BMO Capital Markets","BMO","bmo.com","first.last"],["Piper Sandler","","psc.com","first.last"],
-    ["Oppenheimer & Co","Opco","opco.com","first.last"],["Societe Generale","SocGen","sgcib.com","first.last"],
+    ["Stifel","","stifel.com","lastf"],["William Blair","WB|Blair","williamblair.com","flast"],
+    ["BMO Capital Markets","BMO","bmo.com","first.last"],["Piper Sandler","Piper","psc.com","first.last"],
+    ["Oppenheimer & Co","Opco|Oppenheimer","opco.com","first.last"],["Societe Generale","SocGen","sgcib.com","first.last"],
     ["Cantor Fitzgerald","Cantor","cantor.com","first.last"],["TripleTree","Triple Tree","triple-tree.com","flast"],
-    ["Capital One","","capitalone.com","first.last"],["Kipps DeSanto","","kippsdesanto.com","flast"],
+    ["Capital One","COF","capitalone.com","first.last"],["Kipps DeSanto","Kipps","kippsdesanto.com","flast"],
     ["Harris Williams","HW","harriswilliams.com","flast"],["Credit Agricole","CACIB","ca-cib.com","first.last"],
-    ["Scotiabank","","scotiabank.com","first.last"],["Ducera Partners","Ducera","ducerapartners.com","flast"],
+    ["Scotiabank","Scotia","scotiabank.com","first.last"],["Ducera Partners","Ducera","ducerapartners.com","flast"],
     ["Shea & Co","Shea","shea-co.com","flast"],["WoodRock","","woodrock.com","flast"],
     ["PPHB","","pphb.com","flast"],["Santander","","santander.us","first.last"],
-    ["Main Street Capital","","mainstcapital.com","flast"],["Cascadia Capital","","cascadiacapital.com","flast"],
+    ["Main Street Capital","Main Street","mainstcapital.com","flast"],["Cascadia Capital","Cascadia","cascadiacapital.com","flast"],
     ["Lincoln International","Lincoln","lincolninternational.com","flast"],
-    ["Stephens","","","varies"],["Truist","","","varies"],["Baird","Robert W. Baird","","varies"]];
-  var FIRMS=F.map(function(r){return {name:r[0],alias:r[1]||"",domain:r[2]||"",pattern:r[3],note:r[4]||""};});
+    ["Stephens","","","varies"],["Truist","","","varies"],["Baird","Robert W. Baird|RWB","","varies"]];
+  var FIRMS=F.map(function(r){
+    return { name:r[0], aliases:r[1]?r[1].split("|"):[], domain:r[2]||"", pattern:r[3], note:r[4]||"" };
+  });
   var PATTERNS=["first.last","flast","lastf","f.last","firstlast","first_last","first"];
   var PL={"first.last":"first.last","flast":"flast","lastf":"lastf","f.last":"f.last","firstlast":"firstlast","first_last":"first_last","first":"first"};
+  var STATUS_LABEL={sent:"Waiting on a reply",replied:"Replied",call_booked:"Call booked",closed:"Closed",bounced:"Bounced"};
 
   function $(id){ return document.getElementById(id); }
   function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
   function norm(s){ return String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z]/g,""); }
   function cap(s){ return s?s.charAt(0).toUpperCase()+s.slice(1):""; }
   function clamp(lo,hi,v){ return Math.max(lo,Math.min(hi,v)); }
+  function dbPattern(p){ return (!p||p==="varies")?"unknown":p; }
+
+  function ago(iso){
+    if(!iso) return "";
+    var d=new Date(iso), s=(Date.now()-d.getTime())/1000;
+    if(s<3600) return Math.max(1,Math.round(s/60))+"m ago";
+    if(s<86400) return Math.round(s/3600)+"h ago";
+    var days=Math.round(s/86400);
+    if(days<14) return days+"d ago";
+    return d.toLocaleDateString(undefined,{month:"short",day:"numeric"});
+  }
+  function dateWords(iso){
+    if(!iso) return "recently";
+    return new Date(iso).toLocaleDateString(undefined,{month:"long",day:"numeric"});
+  }
 
   var tt;
   function toast(m){
     var o=document.querySelector(".toast"); if(o) o.remove();
     var e=document.createElement("div"); e.className="toast"; e.textContent=m;
     e.setAttribute("role","status"); document.body.appendChild(e);
-    clearTimeout(tt); tt=setTimeout(function(){e.remove();},3200);
+    clearTimeout(tt); tt=setTimeout(function(){e.remove();},4200);
   }
 
-  /* ================= auth ================= */
-  var me=null, profile=loadProfile();
-  var gTokenClient=null, gToken=null, gExpiry=0, pendingAfterToken=null;
+  /* ==================================================================
+     AUTH
 
-  function loadProfile(){ try{var r=localStorage.getItem("rsr_profile"); if(r) return JSON.parse(r);}catch(e){} return null; }
-  function saveProfile(p){ try{localStorage.setItem("rsr_profile",JSON.stringify(p));}catch(e){} }
+     Sign-in goes through Supabase, not Google directly, because the
+     database needs auth.uid() for every Row Level Security policy. One
+     round trip gives us both: a Supabase session for the database and
+     provider_token, which is the Google access token used for Gmail.
 
-  function configured(){ return CLIENT_ID && CLIENT_ID.indexOf("PASTE_YOUR") !== 0; }
-  function checkConfig(){
-    $("cfgwarn").hidden = configured();
-    $("gsi").disabled = !configured();
+     Supabase does not persist provider_token, so we keep it in
+     sessionStorage ourselves. It dies when the tab closes and expires in
+     under an hour regardless. It is never sent to our database.
+     ================================================================== */
+  var me=null, profile=null, gToken=null, gExpiry=0, booted=false, sentToday=0;
+
+  function stashToken(t){
+    if(!t) return;
+    gToken=t; gExpiry=Date.now()+55*60*1000;
+    try{ sessionStorage.setItem("rsr_gt",JSON.stringify({t:t,e:gExpiry})); }catch(e){}
   }
+  function loadToken(){
+    try{
+      var r=JSON.parse(sessionStorage.getItem("rsr_gt")||"null");
+      if(r&&r.t&&r.e>Date.now()){ gToken=r.t; gExpiry=r.e; }
+    }catch(e){}
+  }
+  function dropToken(){
+    gToken=null; gExpiry=0;
+    try{ sessionStorage.removeItem("rsr_gt"); }catch(e){}
+  }
+  function haveToken(){ return !!gToken && Date.now()<gExpiry; }
 
-  function initGoogle(){
-    if(!configured()) return;
-    if(!window.google || !google.accounts || !google.accounts.oauth2){ setTimeout(initGoogle,300); return; }
-    gTokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: CLIENT_ID,
-      scope: SCOPES,
-      callback: function(resp){
-        if(resp.error){ toast("Google said no: "+resp.error); return; }
-        gToken = resp.access_token;
-        gExpiry = Date.now() + ((resp.expires_in||3600)-60)*1000;
-        if(pendingAfterToken){ var f=pendingAfterToken; pendingAfterToken=null; f(); }
-        else fetchMe();
+  function configured(){ return !!sb; }
+
+  function signIn(){
+    if(!sb){ toast("Not configured yet. See SUPABASE.md."); return; }
+    sb.auth.signInWithOAuth({
+      provider:"google",
+      options:{
+        scopes: GMAIL_SCOPE,
+        redirectTo: location.origin + location.pathname,
+        queryParams:{ access_type:"offline", prompt:"consent" }
       }
+    }).then(function(r){
+      if(r&&r.error) toast("Google sign-in failed: "+r.error.message);
     });
   }
 
-  /* Access tokens last about an hour. When one lapses we ask Google for
-     another, silently if they have already consented. */
-  function needToken(then){
-    if(gToken && Date.now() < gExpiry){ then(); return; }
-    if(!gTokenClient){ toast("Google is still loading. Try again in a second."); return; }
-    pendingAfterToken = then;
-    gTokenClient.requestAccessToken({ prompt: gToken ? "" : "consent" });
+  function boot(){
+    if(!configured()){
+      $("cfgwarn").hidden=false; $("gsi").disabled=true; return;
+    }
+    loadToken();
+
+    sb.auth.onAuthStateChange(function(evt,session){
+      if(session&&session.provider_token) stashToken(session.provider_token);
+      if(evt==="SIGNED_OUT"){
+        me=null; profile=null; dropToken(); booted=false;
+        paintNav(); show("viewHero"); return;
+      }
+      if(session&&session.user&&!booted){ booted=true; afterSignIn(session); }
+    });
+
+    /* Belt and braces: if INITIAL_SESSION never arrives, ask directly. */
+    setTimeout(function(){
+      if(booted) return;
+      sb.auth.getSession().then(function(r){
+        var s=r&&r.data&&r.data.session;
+        if(s&&s.user&&!booted){ booted=true; if(s.provider_token) stashToken(s.provider_token); afterSignIn(s); }
+      });
+    },1200);
   }
 
-  function fetchMe(){
-    fetch("https://www.googleapis.com/oauth2/v3/userinfo",{headers:{Authorization:"Bearer "+gToken}})
-      .then(function(r){ if(!r.ok) throw new Error("userinfo "+r.status); return r.json(); })
-      .then(function(u){
-        me={ email:u.email, name:u.name||"" };
-        paintNav();
-        if(profile && profile.email===me.email) enterApp();
-        else startProfile();
-      })
-      .catch(function(err){ toast("Couldn't read your Google account. "+err.message); });
+  function afterSignIn(session){
+    var u=session.user, m=u.user_metadata||{};
+    me={ id:u.id, email:u.email||"", name:m.full_name||m.name||"" };
+    paintNav();
+    loadFirms();
+    fetchProfile().then(function(p){
+      profile=p;
+      if(p&&p.school&&p.career){
+        enterApp();
+        if(!restorePending()) refreshCap();
+        loadDueCount();
+      } else {
+        startProfile();
+      }
+    });
   }
 
   function paintNav(){
     $("navIn").hidden = !me;
     if(me){
-      $("navName").textContent = (me.name||me.email).split(" ")[0];
-      $("navAv").textContent = (me.name||me.email).split(" ").map(function(p){return p.charAt(0);}).join("").slice(0,2).toUpperCase();
+      var label=(me.name||me.email||"").trim();
+      $("navName").textContent = label.split(" ")[0]||"You";
+      $("navAv").textContent = label.split(/\s+/).map(function(p){return p.charAt(0);}).join("").slice(0,2).toUpperCase()||"?";
     }
   }
+  function markNav(v){
+    $("navSend").className = "navlnk"+(v==="viewApp"?" on":"");
+    $("navContacts").className = "navlnk"+(v==="viewContacts"?" on":"");
+  }
 
-  $("gsi").addEventListener("click",function(){
-    if(!configured()){ checkConfig(); return; }
-    if(!gTokenClient){ initGoogle(); toast("Google is still loading. Try again in a second."); return; }
-    pendingAfterToken = null;
-    gTokenClient.requestAccessToken({ prompt: "consent" });
-  });
+  $("gsi").addEventListener("click",signIn);
   $("signoutBtn").addEventListener("click",function(){
-    if(gToken && window.google && google.accounts && google.accounts.oauth2){
-      try{ google.accounts.oauth2.revoke(gToken,function(){}); }catch(e){}
-    }
-    gToken=null; gExpiry=0; me=null;
+    dropToken();
+    try{ sessionStorage.removeItem("rsr_pending"); }catch(e){}
+    if(sb) sb.auth.signOut();
+    me=null; profile=null; booted=false;
     paintNav(); show("viewHero"); toast("Signed out");
   });
   $("homeBtn").addEventListener("click",function(){ me?enterApp():show("viewHero"); });
+  $("navSend").addEventListener("click",function(){
+    enterApp();
+    /* The cap and the follow-up badge both go stale while you are on another
+       screen, so re-read them rather than trusting what was painted earlier. */
+    refreshCap(); loadDueCount();
+  });
+  $("navContacts").addEventListener("click",function(){ openContacts(); });
 
   /* ================= views ================= */
-  var VIEWS=["viewHero","viewProfile","viewApp"];
+  var VIEWS=["viewHero","viewProfile","viewApp","viewContacts"];
   function show(v){
     VIEWS.forEach(function(x){ $(x).hidden=(x!==v); });
+    markNav(v);
     window.scrollTo(0,0);
-    // Only run the hero animation while the hero is on screen.
-    if(typeof setDemo === "function") setDemo(v === "viewHero");
+    if(typeof setDemo==="function") setDemo(v==="viewHero");
   }
 
-  /* ================= profile ================= */
+  /* ================= profile, in the database ================= */
+  function fetchProfile(){
+    return sb.from("profiles").select("*").eq("id",me.id).maybeSingle()
+      .then(function(r){ return (r&&!r.error&&r.data)?r.data:null; })
+      .catch(function(){ return null; });
+  }
+  function putProfile(p){
+    return sb.from("profiles").upsert({
+      id:me.id, full_name:p.full_name, school:p.school, standing:p.standing,
+      major:p.major, career:p.career, highlights:p.highlights||[]
+    }).select().maybeSingle();
+  }
+
   var resumeHits=[];
   $("pf_career").addEventListener("change",function(){
     $("pf_otherWrap").hidden = this.value!=="__other";
@@ -634,14 +845,14 @@ Nikhil Prabhu</div>
             out.push(line); return out.join("\n");
           }).join("\n");
           resumeHits=pickHits(text); renderHits();
-          $("pf_dropD").textContent="Read locally. "+text.length.toLocaleString()+" characters, never uploaded.";
-        }).catch(function(){ $("pf_dropD").textContent="Couldn’t read the text, but it never left your device."; });
+          $("pf_dropD").textContent="Read locally. "+text.length.toLocaleString()+" characters, and the file stayed on your device.";
+        }).catch(function(){ $("pf_dropD").textContent="Couldn't read the text, but the file never left your device."; });
       };
       fr.readAsArrayBuffer(file);
     } else {
       var f2=new FileReader();
       f2.onload=function(){ resumeHits=pickHits(String(f2.result)); renderHits();
-        $("pf_dropD").textContent="Read locally, never uploaded."; };
+        $("pf_dropD").textContent="Read locally. The file stayed on your device."; };
       f2.readAsText(file);
     }
   }
@@ -654,37 +865,102 @@ Nikhil Prabhu</div>
 
   function startProfile(){
     $("pf_email").textContent=me.email;
-    if(!$("pf_name").value) $("pf_name").value=me.name||"";
+    if(!$("pf_name").value) $("pf_name").value=(profile&&profile.full_name)||me.name||"";
     if(profile){
-      $("pf_school").value=profile.school||""; $("pf_standing").value=profile.standing||"";
+      $("pf_school").value=profile.school||"";
+      $("pf_standing").value=profile.standing||"";
       $("pf_major").value=profile.major||"";
+      if(profile.career){
+        var opt=Array.prototype.filter.call($("pf_career").options,function(o){return o.value===profile.career;})[0];
+        if(opt) $("pf_career").value=profile.career;
+        else { $("pf_career").value="__other"; $("pf_otherWrap").hidden=false; $("pf_other").value=profile.career; }
+      }
     }
     show("viewProfile");
   }
   $("pfForm").addEventListener("submit",function(e){
     e.preventDefault();
-    var sel=$("pf_career").value;
+    var sel=$("pf_career").value, btn=$("pf_save");
     var p={
-      email: me.email,
-      name: $("pf_name").value.trim(),
-      school: $("pf_school").value.trim(),
-      standing: $("pf_standing").value.trim(),
-      major: $("pf_major").value.trim(),
-      career: sel==="__other" ? $("pf_other").value.trim() : sel,
+      full_name: $("pf_name").value.trim(),
+      school:    $("pf_school").value.trim(),
+      standing:  $("pf_standing").value.trim(),
+      major:     $("pf_major").value.trim(),
+      career:    sel==="__other" ? $("pf_other").value.trim() : sel,
       highlights: []
     };
-    if(!p.name||!p.school||!p.career){ $("pf_err").textContent="Name, school and career are needed for the email to read right."; return; }
+    if(!p.full_name||!p.school||!p.career){
+      $("pf_err").textContent="Name, school and career are needed for the email to read right."; return;
+    }
     Array.prototype.forEach.call(document.querySelectorAll("#pf_hits input:checked"),function(cb){
       p.highlights.push(resumeHits[+cb.dataset.h]);
     });
-    profile=p; saveProfile(p); $("pf_err").textContent=""; enterApp();
+    $("pf_err").textContent=""; btn.disabled=true; btn.textContent="Saving…";
+    putProfile(p).then(function(r){
+      btn.disabled=false; btn.textContent="Save and start";
+      if(r&&r.error){ $("pf_err").textContent="Could not save: "+r.error.message; return; }
+      profile=(r&&r.data)||p;
+      enterApp(); refreshCap(); loadDueCount();
+    }).catch(function(err){
+      btn.disabled=false; btn.textContent="Save and start";
+      $("pf_err").textContent="Could not save: "+(err&&err.message||"unknown error");
+    });
   });
 
   function enterApp(){
-    $("ap_hello").textContent="Welcome, "+(profile.name||me.name||"").split(" ")[0]+".";
+    if(!profile){ show("viewHero"); return; }
+    $("ap_hello").textContent="Welcome, "+((profile.full_name||me.name||"").split(" ")[0]||"")+".";
     $("ap_sub").innerHTML=esc(profile.school)+" &middot; recruiting for "+esc(profile.career)+
       " &middot; sending from <span class=\"mono\" style=\"color:var(--text);font-weight:600\">"+esc(me.email)+"</span>";
+    paintReconnect();
     show("viewApp");
+  }
+
+  /* The Gmail token is gone after a refresh. Say so up front rather than
+     letting someone write a whole email and hit a wall at send time. */
+  function paintReconnect(){
+    var el=$("ap_reconnect");
+    if(haveToken()){ el.hidden=true; el.innerHTML=""; return; }
+    el.innerHTML='<div class="reconnect"><span><b>Gmail needs reconnecting.</b> '+
+      'Signing in again takes one click and keeps whatever you have typed.</span>'+
+      '<button class="mini solid" type="button" id="reconBtn">Reconnect Gmail</button></div>';
+    el.hidden=false;
+    $("reconBtn").addEventListener("click",function(){ stashPending(); signIn(); });
+  }
+
+  function refreshCap(){
+    if(!sb||!profile) return;
+    sb.rpc("sends_today").then(function(r){
+      if(!r||r.error) return;
+      sentToday=r.data||0;
+      var capN=profile.daily_cap||10, left=Math.max(0,capN-sentToday);
+      $("ap_cap").innerHTML = left>0
+        ? esc(sentToday+" of "+capN+" sent in the last 24 hours. "+left+" left.")
+        : "<b>You have hit "+capN+" sends in 24 hours.</b> That is the cap, and it is there to keep your own Gmail from getting flagged. Come back tomorrow.";
+    });
+  }
+  function atCap(){ return profile && sentToday>=(profile.daily_cap||10); }
+
+  /* ================= firm list from the database ================= */
+  function loadFirms(){
+    if(!sb) { paintFirmList(); return; }
+    sb.from("firm_formats").select("name,aliases,domain,pattern,note,confirmed,bounced")
+      .then(function(r){
+        if(r&&!r.error&&r.data&&r.data.length){
+          FIRMS=r.data.map(function(f){
+            return { name:f.name, aliases:f.aliases||[], domain:f.domain||"",
+                     pattern:(f.pattern==="unknown"?"varies":f.pattern),
+                     note:f.note||"", confirmed:f.confirmed||0, bounced:f.bounced||0 };
+          }).sort(function(a,b){ return a.name.localeCompare(b.name); });
+        }
+        paintFirmList();
+      }).catch(function(){ paintFirmList(); });
+  }
+  function paintFirmList(){
+    $("firmlist").innerHTML=FIRMS.map(function(f){
+      var a=f.aliases&&f.aliases.length?" ("+f.aliases[0]+")":"";
+      return '<option value="'+esc(f.name)+'" label="'+esc(f.name+a)+'"></option>';
+    }).join("");
   }
 
   /* ================= lookup engine ================= */
@@ -714,17 +990,23 @@ Nikhil Prabhu</div>
     if(parts.length>=3) return {quality:"ambiguous",slug:slug,first:cap(parts[0]),last:parts.slice(1).map(cap).join("-")};
     return {quality:"unparsed",slug:slug,first:"",last:""};
   }
+  function aliasHit(f,tl,exact){
+    return (f.aliases||[]).some(function(a){
+      var al=String(a).toLowerCase();
+      return exact ? al===tl : al.indexOf(tl)>=0;
+    });
+  }
   function resolveFirm(text){
     var t=String(text||"").trim(); if(!t) return null;
     var tl=t.toLowerCase();
     var x=FIRMS.filter(function(f){return f.name.toLowerCase()===tl;})[0]; if(x) return x;
-    x=FIRMS.filter(function(f){return f.alias&&f.alias.toLowerCase().split(/\s+/).indexOf(tl)>=0;})[0]; if(x) return x;
+    x=FIRMS.filter(function(f){return aliasHit(f,tl,true);})[0]; if(x) return x;
     x=FIRMS.filter(function(f){return f.domain&&f.domain===tl;})[0]; if(x) return x;
-    var sub=FIRMS.filter(function(f){return f.name.toLowerCase().indexOf(tl)>=0||(f.alias&&f.alias.toLowerCase().indexOf(tl)>=0);});
+    var sub=FIRMS.filter(function(f){return f.name.toLowerCase().indexOf(tl)>=0||aliasHit(f,tl,false);});
     if(sub.length===1) return sub[0];
     if(sub.length>1){ var s=sub.filter(function(f){return f.name.toLowerCase().indexOf(tl)===0;}); if(s.length===1) return s[0]; }
-    if(/^[a-z0-9.\-]+\.[a-z]{2,}$/.test(tl)) return {name:t,alias:"",domain:tl.replace(/^www\./,""),pattern:"varies",note:""};
-    return {name:t,alias:"",domain:"",pattern:"varies",note:""};
+    if(/^[a-z0-9.\-]+\.[a-z]{2,}$/.test(tl)) return {name:t,aliases:[],domain:tl.replace(/^www\./,""),pattern:"varies",note:""};
+    return {name:t,aliases:[],domain:"",pattern:"varies",note:""};
   }
   function score(firm,name,manual){
     var s=firm.pattern==="varies"?38:88;
@@ -732,6 +1014,9 @@ Nikhil Prabhu</div>
     else if(name.quality==="ambiguous") s-=18;
     else if(name.quality==="unparsed") s-=25;
     if(/[-'\s]/.test(name.last||"")) s-=10;
+    /* real outcomes from every user of the tool, once there are any */
+    var c=firm.confirmed||0, b=firm.bounced||0;
+    if(c+b>=3){ s += clamp(-12,10,Math.round(((c-b)/(c+b))*10)); }
     return clamp(15,95,s);
   }
   function plainWord(s,firm){
@@ -741,13 +1026,16 @@ Nikhil Prabhu</div>
   }
   function reasons(firm,name,manual){
     var o=[];
-    if(firm.pattern!=="varies") o.push("<b>+</b><span>"+esc(PL[firm.pattern])+"@"+esc(firm.domain)+" is a confirmed format at "+esc(firm.name)+".</span>");
+    if(firm.pattern!=="varies") o.push("<b>+</b><span>"+esc(PL[firm.pattern]||firm.pattern)+"@"+esc(firm.domain)+" is a confirmed format at "+esc(firm.name)+".</span>");
     else o.push("<b>&minus;</b><span>No confirmed format for "+esc(firm.name)+". Everything below is ranked by how common the pattern is in general.</span>");
     if(manual) o.push("<b>+</b><span>You typed the name yourself instead of letting the URL guess it.</span>");
     else if(name.quality==="clean") o.push("<b>+</b><span>The profile URL split cleanly into two name parts.</span>");
     else if(name.quality==="ambiguous") o.push("<b>&minus;</b><span>The URL has three or more parts, so where the first name ends is a guess.</span>");
     else if(name.quality==="unparsed") o.push("<b>&minus;</b><span>That's a custom URL handle, so no name could be read out of it.</span>");
     if(/[-'\s]/.test(name.last||"")) o.push("<b>&minus;</b><span>Compound last name. This is where formats break most often.</span>");
+    var c=firm.confirmed||0,b=firm.bounced||0;
+    if(c+b>=3) o.push("<b>"+(c>=b?"+":"&minus;")+"</b><span>Students using this tool have reported "+c+
+      " confirmed and "+b+" bounced at "+esc(firm.name)+".</span>");
     o.push("<b>!</b><span>Almost every bank here runs Microsoft 365, which accepts mail for addresses that don't exist. Nothing confirms the mailbox is real.</span>");
     return o;
   }
@@ -763,15 +1051,15 @@ Nikhil Prabhu</div>
   }
   function draft(firm,name){
     var a=profile;
-    var extra=(a.highlights&&a.highlights.length)?" "+a.highlights[0].replace(/\.$/,"")+".":"";
+    var hl=(a.highlights&&a.highlights.length)?" "+String(a.highlights[0]).replace(/\.$/,"")+".":"";
     var standing=a.standing?a.standing+" ":"student ";
     return {
-      subject:a.school.replace(/^The /,"").replace(/ University$/,"")+" student interested in "+firm.name,
+      subject:String(a.school||"").replace(/^The /,"").replace(/ University$/,"")+" student interested in "+firm.name,
       body:"Hi "+(name.first||"there")+",\n\n"+
-        "I hope you are doing well. My name is "+a.name+". I am a "+standing+"at "+a.school+
-        (a.major?" studying "+a.major:"")+". I am interested in pursuing a career in "+a.career+" at "+firm.name+"."+extra+"\n\n"+
+        "I hope you are doing well. My name is "+a.full_name+". I am a "+standing+"at "+a.school+
+        (a.major?" studying "+a.major:"")+". I am interested in pursuing a career in "+a.career+" at "+firm.name+"."+hl+"\n\n"+
         "If possible, would you be open to a brief call in the coming weeks? I would love to learn more about your experience and journey. I am happy to work with your schedule.\n\n"+
-        "Thanks,\n"+a.name
+        "Thanks,\n"+a.full_name
     };
   }
 
@@ -780,17 +1068,22 @@ Nikhil Prabhu</div>
     var el=$("found");
     el.innerHTML=
       '<div class="who"><span class="nm">'+esc(((r.name.first||"")+" "+(r.name.last||"")).trim())+'</span>'+
-        '<span class="fm">'+esc(r.firm.name)+'</span></div>'+
+        '<span class="fm">'+esc(r.firm.name)+(r.kind==="follow_up"?' &middot; follow-up':'')+'</span></div>'+
       '<div class="mailtop"><div class="mono addr">'+esc(r.email)+'</div>'+
-        '<div class="gauge"><div class="pct">'+r.score+'%</div>'+
-          '<div><div class="band '+b.k+'">'+b.t+'</div><div class="bandsub">confidence</div></div></div></div>'+
-      '<p class="plain '+b.k+'" style="margin:0">'+esc(plainWord(r.score,r.firm))+'</p>'+
+        (r.score?'<div class="gauge"><div class="pct">'+r.score+'%</div>'+
+          '<div><div class="band '+b.k+'">'+b.t+'</div><div class="bandsub">confidence</div></div></div>':'')+'</div>'+
+      (r.kind==="follow_up"
+        ? '<p class="plain h" style="margin:0">You already emailed this address'+(r.lastSent?" on "+esc(dateWords(r.lastSent)):"")+
+            '. This one goes out in the same thread, so it lands under the original.</p>'
+        : '<p class="plain '+b.k+'" style="margin:0">'+esc(plainWord(r.score,r.firm))+'</p>')+
       (r.firm.note?'<p class="flag" style="margin:0">'+esc(r.firm.note)+'</p>':'')+
-      '<details><summary>Why that number</summary>'+
-        '<ul class="why">'+r.reasons.map(function(x){return '<li>'+x+'</li>';}).join("")+'</ul>'+
-        (r.alts.length?'<div class="alts"><div class="kicker" style="color:var(--faint);margin-bottom:9px">IF IT BOUNCES, TRY</div>'+
-          r.alts.map(function(a){return '<div class="altrow"><span class="mono">'+esc(a.a)+'</span><span class="mono">'+a.p+'%</span></div>';}).join("")+'</div>':'')+
-      '</details>';
+      ((r.reasons&&r.reasons.length)
+        ? '<details><summary>Why that number</summary>'+
+            '<ul class="why">'+r.reasons.map(function(x){return '<li>'+x+'</li>';}).join("")+'</ul>'+
+            ((r.alts&&r.alts.length)?'<div class="alts"><div class="kicker" style="color:var(--faint);margin-bottom:9px">IF IT BOUNCES, TRY</div>'+
+              r.alts.map(function(a){return '<div class="altrow"><span class="mono">'+esc(a.a)+'</span><span class="mono">'+a.p+'%</span></div>';}).join("")+'</div>':'')+
+          '</details>'
+        : '');
     el.hidden=false;
   }
   function renderNote(r){
@@ -818,6 +1111,35 @@ Nikhil Prabhu</div>
       if(navigator.clipboard) navigator.clipboard.writeText(t).then(function(){toast("Copied");});
     });
   }
+  function clearCards(){
+    $("found").hidden=true; $("noteCard").hidden=true; $("sendCard").hidden=true;
+    st.result=null;
+  }
+
+  /* ---- keeping a draft alive across a re-auth round trip ---- */
+  function stashPending(){
+    if(!st.result) return;
+    try{
+      sessionStorage.setItem("rsr_pending",JSON.stringify({
+        r:st.result,
+        subject:$("subj")?$("subj").value:"",
+        body:$("body")?$("body").value:""
+      }));
+    }catch(e){}
+  }
+  function restorePending(){
+    var p=null;
+    try{ p=JSON.parse(sessionStorage.getItem("rsr_pending")||"null"); }catch(e){}
+    if(!p||!p.r) return false;
+    try{ sessionStorage.removeItem("rsr_pending"); }catch(e){}
+    st.result=p.r;
+    renderFound(st.result); renderNote(st.result); renderSend(st.result);
+    if(p.subject) $("subj").value=p.subject;
+    if(p.body) $("body").value=p.body;
+    refreshCap();
+    toast("Your draft is back. Press send when you are ready.");
+    return true;
+  }
 
   /* ---- the actual Gmail send ---- */
   function b64url(str){
@@ -826,50 +1148,99 @@ Nikhil Prabhu</div>
     return btoa(bin).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
   }
   function encHeader(s){
-    /* RFC 2047 for any non-ASCII in the subject */
-    return /^[\x20-\x7E]*$/.test(s) ? s : "=?UTF-8?B?"+btoa(String.fromCharCode.apply(null,new TextEncoder().encode(s)))+"?=";
+    if(/^[\x20-\x7E]*$/.test(s)) return s;
+    var bytes=new TextEncoder().encode(s),bin="";
+    for(var i=0;i<bytes.length;i++) bin+=String.fromCharCode(bytes[i]);
+    return "=?UTF-8?B?"+btoa(bin)+"?=";
   }
-  function rawMessage(to,from,fromName,subject,body){
-    return b64url([
-      "From: "+(fromName?'"'+fromName.replace(/"/g,"")+'" <'+from+">":from),
+  function rawMessage(to,from,fromName,subject,body,inReplyTo){
+    var h=[
+      "From: "+(fromName?'"'+String(fromName).replace(/"/g,"")+'" <'+from+">":from),
       "To: "+to,
-      "Subject: "+encHeader(subject),
-      "MIME-Version: 1.0",
-      'Content-Type: text/plain; charset="UTF-8"',
-      "Content-Transfer-Encoding: 8bit",
-      "",
-      body
-    ].join("\r\n"));
+      "Subject: "+encHeader(subject)
+    ];
+    if(inReplyTo){ h.push("In-Reply-To: "+inReplyTo); h.push("References: "+inReplyTo); }
+    h.push("MIME-Version: 1.0");
+    h.push('Content-Type: text/plain; charset="UTF-8"');
+    h.push("Content-Transfer-Encoding: 8bit");
+    h.push("");
+    h.push(body);
+    return b64url(h.join("\r\n"));
   }
-  function doSend(){
-    var btn=$("sendBtn"); if(!st.result) return;
-    var to=st.result.email, su=$("subj").value, bo=$("body").value;
-    if(!to){ toast("No address to send to."); return; }
-    btn.disabled=true; btn.textContent="Sending\u2026";
 
-    needToken(function(){
-      fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send",{
-        method:"POST",
-        headers:{ Authorization:"Bearer "+gToken, "Content-Type":"application/json" },
-        body: JSON.stringify({ raw: rawMessage(to, me.email, profile.name, su, bo) })
-      }).then(function(r){
-        if(r.status===401){ gToken=null; gExpiry=0; throw new Error("Session expired. Press send again."); }
-        if(!r.ok) return r.json().then(function(j){ throw new Error((j.error&&j.error.message)||("Gmail returned "+r.status)); });
-        return r.json();
-      }).then(function(){
-        $("sendCard").innerHTML='<div class="sentbox">Sent to '+esc(to)+'. It is in your Gmail Sent folder now.</div>'+
-          '<button class="pill" type="button" id="againBtn" style="align-self:flex-start">Look up someone else</button>';
-        $("againBtn").addEventListener("click",function(){
-          $("found").hidden=true; $("noteCard").hidden=true; $("sendCard").hidden=true;
-          $("url").value=""; $("firm").value=""; $("url").focus();
-          window.scrollTo({top:0,behavior:"smooth"});
-        });
-        toast("Sent");
-      }).catch(function(err){
-        btn.disabled=false; btn.textContent="Send it";
-        toast(err.message);
+  function doSend(){
+    var btn=$("sendBtn"), r=st.result;
+    if(!r) return;
+    var to=r.email, su=$("subj").value, bo=$("body").value;
+    if(!to){ toast("No address to send to."); return; }
+    if(atCap()){ toast("Daily cap reached. This is to protect your own Gmail account."); return; }
+
+    if(!haveToken()){
+      stashPending();
+      toast("Reconnecting Gmail. Your draft is saved.");
+      setTimeout(signIn,700);
+      return;
+    }
+
+    btn.disabled=true; btn.textContent="Sending…";
+    var payload={ raw: rawMessage(to, me.email, profile.full_name, su, bo, r.inReplyTo||null) };
+    if(r.threadId) payload.threadId=r.threadId;
+
+    fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send",{
+      method:"POST",
+      headers:{ Authorization:"Bearer "+gToken, "Content-Type":"application/json" },
+      body: JSON.stringify(payload)
+    }).then(function(res){
+      if(res.status===401||res.status===403){
+        dropToken();
+        throw new Error("Gmail rejected the token. Press Reconnect Gmail and try again.");
+      }
+      if(!res.ok) return res.json().then(function(j){
+        throw new Error((j.error&&j.error.message)||("Gmail returned "+res.status));
       });
+      return res.json();
+    }).then(function(sent){
+      /* Gmail took it. Log it, and never let a logging failure look like a
+         send failure, because the email is already gone. */
+      return logSend(r,to,su,bo,sent).then(function(ok){
+        return {sent:sent,logged:ok};
+      });
+    }).then(function(out){
+      sentToday++;
+      $("sendCard").innerHTML='<div class="sentbox">Sent to '+esc(to)+'. It is in your Gmail Sent folder now'+
+        (out.logged?' and saved to your contacts.':', though saving it to your contacts failed. The email went out.')+'</div>'+
+        '<div class="acts">'+
+          '<button class="pill" type="button" id="againBtn">Look up someone else</button>'+
+          '<button class="pill" type="button" id="toContacts">See my contacts</button>'+
+        '</div>';
+      $("againBtn").addEventListener("click",function(){
+        clearCards();
+        $("url").value=""; $("firm").value=""; $("dom").value="";
+        $("nameWrap").hidden=true; $("fn").value=""; $("ln").value="";
+        $("firmHint").textContent="Name, nickname like PWP, or the domain.";
+        $("url").focus();
+        window.scrollTo({top:0,behavior:"smooth"});
+      });
+      $("toContacts").addEventListener("click",openContacts);
+      refreshCap(); loadDueCount();
+      toast("Sent");
+    }).catch(function(err){
+      btn.disabled=false; btn.textContent="Send it";
+      paintReconnect();
+      toast(err.message||"Something went wrong.");
     });
+  }
+
+  function logSend(r,to,su,bo,sent){
+    if(!sb) return Promise.resolve(false);
+    return sb.rpc("record_send",{
+      p_first: r.name.first||"", p_last: r.name.last||"", p_email: to,
+      p_firm: r.firm.name||null, p_firm_domain: r.firm.domain||null,
+      p_linkedin_url: r.linkedin||null,
+      p_confidence: r.score||null, p_pattern: dbPattern(r.firm.pattern),
+      p_subject: su, p_body: bo, p_kind: r.kind==="follow_up"?"follow_up":"initial",
+      p_gmail_id: (sent&&sent.id)||null, p_thread_id: (sent&&sent.threadId)||null
+    }).then(function(res){ return !(res&&res.error); }).catch(function(){ return false; });
   }
 
   function run(){
@@ -894,8 +1265,12 @@ Nikhil Prabhu</div>
       $(name.first?"ln":"fn").focus(); return;
     }
     var s=score(firm,name,manual);
-    st.result={firm:firm,name:name,score:s,email:build(firm.pattern,name.first,name.last,firm.domain),
-      reasons:reasons(firm,name,manual),alts:alternates(firm,name),draft:draft(firm,name)};
+    st.result={
+      firm:firm, name:name, score:s, kind:"initial",
+      linkedin: $("url").value.trim()||null,
+      email:build(firm.pattern,name.first,name.last,firm.domain),
+      reasons:reasons(firm,name,manual), alts:alternates(firm,name), draft:draft(firm,name)
+    };
     renderFound(st.result); renderNote(st.result); renderSend(st.result);
     $("found").scrollIntoView({behavior:"smooth",block:"center"});
   }
@@ -911,13 +1286,197 @@ Nikhil Prabhu</div>
     var f=resolveFirm(this.value),h=$("firmHint");
     $("domWrap").hidden=!(f&&!f.domain);
     if(!this.value.trim()){ h.textContent="Name, nickname like PWP, or the domain."; return; }
-    if(f&&f.domain&&f.pattern!=="varies") h.textContent="Confirmed: "+PL[f.pattern]+"@"+f.domain;
+    if(f&&f.domain&&f.pattern!=="varies") h.textContent="Confirmed: "+(PL[f.pattern]||f.pattern)+"@"+f.domain;
     else if(f&&f.pattern==="varies"&&f.domain) h.textContent="Format varies here, so expect a low number.";
     else h.textContent="Not on the list. Add their domain and we'll rank the candidates.";
   });
-  $("firmlist").innerHTML=FIRMS.map(function(f){
-    return '<option value="'+esc(f.name)+'" label="'+esc(f.name+(f.alias?" ("+f.alias.split(/\s+/)[0]+")":""))+'"></option>';
-  }).join("");
+  paintFirmList();
+
+  /* ==================================================================
+     CONTACTS
+     ================================================================== */
+  var contacts=[], ctLoaded=false;
+
+  function openContacts(){
+    show("viewContacts");
+    if(!ctLoaded) loadContacts();
+  }
+  function loadContacts(){
+    if(!sb) return;
+    $("ct_list").innerHTML='<div class="loading"><span class="spin"></span></div>';
+    sb.from("contacts")
+      .select("id,first_name,last_name,email,firm,firm_domain,linkedin_url,confidence,pattern,status,notes,first_sent_at,last_sent_at,replied_at,follow_up_at,follow_ups_sent")
+      .order("last_sent_at",{ascending:false,nullsFirst:false})
+      .then(function(r){
+        if(r&&r.error){
+          $("ct_list").innerHTML='<div class="empty"><b>Could not load your contacts</b>'+esc(r.error.message)+'</div>';
+          return;
+        }
+        contacts=(r&&r.data)||[]; ctLoaded=true;
+        paintStats(); paintDue(); paintContacts();
+      }).catch(function(err){
+        $("ct_list").innerHTML='<div class="empty"><b>Could not load your contacts</b>'+esc(err&&err.message||"")+'</div>';
+      });
+  }
+  $("ct_refresh").addEventListener("click",loadContacts);
+  $("ct_q").addEventListener("input",paintContacts);
+  $("ct_f").addEventListener("change",paintContacts);
+
+  function isDue(c){
+    return c.status==="sent" && c.follow_up_at && new Date(c.follow_up_at).getTime()<=Date.now()
+      && (c.follow_ups_sent||0)<2;
+  }
+  function paintStats(){
+    var total=contacts.length;
+    var good=contacts.filter(function(c){return c.status==="replied"||c.status==="call_booked";}).length;
+    var waiting=contacts.filter(function(c){return c.status==="sent";}).length;
+    var rate=total?Math.round((good/total)*100):0;
+    $("ct_stats").innerHTML=
+      '<div class="stat"><div class="n">'+total+'</div><div class="l">CONTACTED</div></div>'+
+      '<div class="stat"><div class="n">'+waiting+'</div><div class="l">WAITING</div></div>'+
+      '<div class="stat"><div class="n">'+good+'</div><div class="l">REPLIED</div></div>'+
+      '<div class="stat"><div class="n">'+rate+'%</div><div class="l">RESPONSE RATE</div></div>';
+  }
+  function paintDue(){
+    var due=contacts.filter(isDue);
+    var el=$("ct_due");
+    if(!due.length){ el.innerHTML=""; return; }
+    el.innerHTML='<div class="dueband"><h3>'+due.length+' follow-up'+(due.length>1?"s":"")+' due</h3>'+
+      '<div class="sub">Three days is usually the right gap. Two nudges is persistence, three is pestering.</div>'+
+      due.slice(0,6).map(function(c){
+        return '<div class="duerow"><div><span class="dn">'+esc((c.first_name+" "+c.last_name).trim())+'</span>'+
+          '<div class="dd2">'+esc(c.firm||"")+' &middot; last emailed '+esc(ago(c.last_sent_at))+'</div></div>'+
+          '<button class="mini solid" type="button" data-fu="'+esc(c.id)+'">Write follow-up</button></div>';
+      }).join("")+'</div>';
+    Array.prototype.forEach.call(el.querySelectorAll("[data-fu]"),function(b){
+      b.addEventListener("click",function(){ startFollowUp(b.getAttribute("data-fu")); });
+    });
+  }
+  function paintContacts(){
+    var q=$("ct_q").value.trim().toLowerCase(), f=$("ct_f").value;
+    var rows=contacts.filter(function(c){
+      if(f&&c.status!==f) return false;
+      if(!q) return true;
+      return ((c.first_name||"")+" "+(c.last_name||"")+" "+(c.firm||"")+" "+(c.email||"")).toLowerCase().indexOf(q)>=0;
+    });
+    var el=$("ct_list");
+    if(!contacts.length){
+      el.innerHTML='<div class="empty"><b>Nothing here yet</b>Every email you send through the tool shows up on this page, '+
+        'with the address, the date and whatever you write in the notes.</div>';
+      return;
+    }
+    if(!rows.length){ el.innerHTML='<div class="empty"><b>No matches</b>Try a different name or clear the filter.</div>'; return; }
+
+    el.innerHTML=rows.map(function(c){
+      var nm=((c.first_name||"")+" "+(c.last_name||"")).trim()||c.email;
+      return '<div class="ctrow" data-id="'+esc(c.id)+'">'+
+        '<div class="cthead"><div style="min-width:0">'+
+          '<span class="ctname">'+esc(nm)+'</span>'+(c.firm?'<span class="ctfirm">'+esc(c.firm)+'</span>':'')+
+          '<div class="ctmail mono">'+esc(c.email)+'</div>'+
+        '</div><div style="text-align:right;font-size:13px;color:var(--faint);white-space:nowrap">'+
+          esc(ago(c.last_sent_at))+
+          ((c.follow_ups_sent||0)?'<div>'+c.follow_ups_sent+' follow-up'+(c.follow_ups_sent>1?"s":"")+'</div>':'')+
+        '</div></div>'+
+        '<div class="ctmeta">'+
+          '<label class="vh" for="s_'+esc(c.id)+'">Status</label>'+
+          '<select class="ctstat s-'+esc(c.status)+'" id="s_'+esc(c.id)+'" data-st="'+esc(c.id)+'">'+
+            Object.keys(STATUS_LABEL).map(function(k){
+              return '<option value="'+k+'"'+(k===c.status?" selected":"")+'>'+esc(STATUS_LABEL[k])+'</option>';
+            }).join("")+
+          '</select>'+
+          (isDue(c)?'<span class="tag due">FOLLOW UP DUE</span>':'')+
+          '<button class="mini" type="button" data-fu="'+esc(c.id)+'">Follow up</button>'+
+          (c.linkedin_url?'<a class="mini" style="text-decoration:none;display:inline-flex;align-items:center" target="_blank" rel="noopener" href="'+
+            esc(/^https?:/.test(c.linkedin_url)?c.linkedin_url:"https://"+c.linkedin_url)+'">LinkedIn</a>':'')+
+        '</div>'+
+        '<label class="vh" for="n_'+esc(c.id)+'">Notes</label>'+
+        '<textarea class="ctnotes" id="n_'+esc(c.id)+'" data-nt="'+esc(c.id)+'" placeholder="Notes. What you talked about, who they referred you to, when to circle back.">'+
+          esc(c.notes||"")+'</textarea>'+
+      '</div>';
+    }).join("");
+
+    Array.prototype.forEach.call(el.querySelectorAll("[data-st]"),function(s){
+      s.addEventListener("change",function(){ setStatus(s.getAttribute("data-st"),s.value); });
+    });
+    Array.prototype.forEach.call(el.querySelectorAll("[data-nt]"),function(t){
+      var id=t.getAttribute("data-nt"), was=t.value;
+      t.addEventListener("blur",function(){
+        if(t.value===was) return;
+        was=t.value; saveNote(id,t.value);
+      });
+    });
+    Array.prototype.forEach.call(el.querySelectorAll("[data-fu]"),function(b){
+      b.addEventListener("click",function(){ startFollowUp(b.getAttribute("data-fu")); });
+    });
+  }
+
+  function setStatus(id,val){
+    sb.rpc("report_outcome",{p_contact_id:id,p_outcome:val}).then(function(r){
+      if(r&&r.error){ toast("Could not save: "+r.error.message); return; }
+      contacts.forEach(function(c){
+        if(c.id===id){
+          c.status=val;
+          if(val==="replied"||val==="call_booked") c.replied_at=c.replied_at||new Date().toISOString();
+          if(val!=="sent") c.follow_up_at=null;
+        }
+      });
+      paintStats(); paintDue(); paintContacts(); loadDueCount();
+      toast("Saved");
+    });
+  }
+  function saveNote(id,text){
+    sb.from("contacts").update({notes:text}).eq("id",id).then(function(r){
+      if(r&&r.error){ toast("Note did not save: "+r.error.message); return; }
+      contacts.forEach(function(c){ if(c.id===id) c.notes=text; });
+      toast("Note saved");
+    });
+  }
+
+  function loadDueCount(){
+    if(!sb) return;
+    sb.from("due_follow_ups").select("id").then(function(r){
+      var n=(r&&!r.error&&r.data)?r.data.length:0;
+      $("navDue").hidden = n===0;
+      $("navDue").textContent = n;
+    }).catch(function(){});
+  }
+
+  /* Follow-ups go into the original Gmail thread, which is why we fetch the
+     last message for the contact rather than starting a fresh subject. */
+  function startFollowUp(id){
+    var c=contacts.filter(function(x){return x.id===id;})[0];
+    if(!c){ toast("Couldn't find that contact."); return; }
+    sb.from("messages").select("subject,gmail_thread_id,sent_at")
+      .eq("contact_id",id).order("sent_at",{ascending:false}).limit(1)
+      .then(function(r){
+        var last=(r&&!r.error&&r.data&&r.data[0])||null;
+        var subj=last&&last.subject ? (/^re:/i.test(last.subject)?last.subject:"Re: "+last.subject)
+                                    : "Following up";
+        st.result={
+          kind:"follow_up",
+          contactId:c.id,
+          threadId:(last&&last.gmail_thread_id)||null,
+          lastSent:c.last_sent_at,
+          firm:{ name:c.firm||"", domain:c.firm_domain||"", pattern:c.pattern||"varies", note:"" },
+          name:{ first:c.first_name||"", last:c.last_name||"", quality:"clean" },
+          score:0, email:c.email, linkedin:c.linkedin_url||null,
+          reasons:[], alts:[],
+          draft:{
+            subject: subj,
+            body: "Hi "+(c.first_name||"there")+",\n\n"+
+              "I wanted to follow up on my note from "+dateWords(c.last_sent_at)+". I know this is a busy stretch, "+
+              "so no problem at all if the timing is not right.\n\n"+
+              "I would still love to hear about your experience"+(c.firm?" at "+c.firm:"")+
+              " if you have fifteen minutes in the next couple of weeks. Happy to work entirely around your schedule.\n\n"+
+              "Thanks,\n"+(profile.full_name||"")
+          }
+        };
+        enterApp();
+        renderFound(st.result); renderNote(st.result); renderSend(st.result);
+        refreshCap();
+        $("found").scrollIntoView({behavior:"smooth",block:"center"});
+      });
+  }
 
   /* ================= animated hero demo ================= */
   var timers=[], demoOn=true;
@@ -1056,8 +1615,7 @@ Nikhil Prabhu</div>
   if(reduceMotion){ demoOn=false; resetDemo(); }
   else at(500,loop);
 
-  checkConfig();
-  initGoogle();
+  boot();
 })();
 </script>
 </body>
