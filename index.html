@@ -48,6 +48,7 @@
     padding-bottom:50px;min-height:100vh}
   .shell{max-width:1180px;margin:0 auto;padding-inline:24px}
   .narrow{max-width:640px}
+  .compose{max-width:780px}
   .mid{max-width:820px}
   nav{display:flex;align-items:center;gap:12px;padding-block:20px}
   .logo{display:flex;align-items:center;gap:9px;font-weight:800;font-size:18px;letter-spacing:-.03em;
@@ -146,11 +147,25 @@
   .alts{margin-top:16px;padding-top:15px;border-top:1px solid var(--border)}
   .altrow{display:flex;justify-content:space-between;gap:14px;font-size:13.5px;color:var(--dim);padding:5px 0}
   .subj{display:flex;gap:11px;align-items:center;flex-wrap:wrap}
-  .subj input{flex-grow:1;min-width:220px;background:var(--surface2);border:1.5px solid transparent;border-radius:12px;
-    height:46px;padding:0 14px;font-size:15.5px;font-weight:600;outline:none}
-  textarea#body{width:100%;min-height:300px;resize:vertical;background:var(--surface2);border:1.5px solid transparent;
-    border-radius:16px;padding:18px;font-size:15.5px;line-height:1.7;outline:none;font-family:inherit}
+  .subj input{flex-grow:1;min-width:240px;background:var(--surface2);border:1.5px solid transparent;border-radius:13px;
+    height:54px;padding:0 16px;font-size:16.5px;font-weight:600;outline:none}
+  textarea#body{width:100%;min-height:460px;resize:vertical;background:var(--surface2);border:1.5px solid transparent;
+    border-radius:16px;padding:22px;font-size:16.5px;line-height:1.75;outline:none;font-family:inherit}
   textarea#body:focus,.subj input:focus{border-color:var(--accent);background:var(--surface)}
+  .bodymeta{display:flex;justify-content:space-between;gap:14px;font-size:13px;color:var(--faint);margin-top:-6px}
+  @media (max-width:640px){ textarea#body{min-height:380px;font-size:16px;padding:16px} }
+
+  /* ---------- domain check ---------- */
+  .mxline{font-size:14px;line-height:1.6;padding:13px 15px;border-radius:14px;font-weight:500;
+    display:flex;gap:11px;align-items:flex-start}
+  .mxline .ic{flex-shrink:0;font-weight:800;width:16px;text-align:center}
+  .mxline.checking{background:var(--surface2);color:var(--dim)}
+  .mxline.good{background:var(--high-bg);color:var(--high)}
+  .mxline.warn{background:var(--mid-bg);color:var(--mid)}
+  .mxline.bad{background:var(--low-bg);color:var(--accent-ink);font-weight:600}
+  .mxline.bad.hard{background:#F6E1E1;color:#8A1414}
+  @media (prefers-color-scheme:dark){ .mxline.bad.hard{background:#3A1A1A;color:#F0A9A9} }
+  .mxsub{display:block;font-weight:400;margin-top:4px;opacity:.88}
   .acts{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
   .foot{color:var(--faint);font-size:13.5px;line-height:1.55}
   .foot b{color:var(--mid);font-weight:700}
@@ -388,7 +403,7 @@
                     <div class="kicker" style="color:var(--faint);margin-bottom:5px">THEIR LIKELY EMAIL</div>
                     <span class="mono dmail">john.doe@goldmanstanley.com</span>
                   </div>
-                  <div><div class="dpct" id="d_pct">0%</div><div class="dverdict">Good odds</div></div>
+                  <div><div class="dpct" id="d_pct">0%</div><div class="dverdict">Strong format match</div></div>
                 </div>
                 <div class="ddraft"><b>Texas A&amp;M &rsquo;27 interested in Goldman Stanley</b>Hi John,
 
@@ -477,7 +492,7 @@ Nikhil Prabhu</div>
 
   <!-- ===== SEND ===== -->
   <div id="viewApp" hidden>
-    <div class="shell narrow wrap">
+    <div class="shell compose wrap">
       <h2 id="ap_hello">Welcome back</h2>
       <p class="lede" id="ap_sub"></p>
       <div class="capline" id="ap_cap"></div>
@@ -500,14 +515,17 @@ Nikhil Prabhu</div>
               <datalist id="firmlist"></datalist>
               <label class="f" for="dom" id="domWrap" hidden>Firm email domain
                 <input id="dom" class="mono" type="text" placeholder="firmname.com" style="font-size:14px">
-                <span class="tip">No confirmed format for this one, so everything comes back low.</span>
+                <span class="tip">Whatever you put here wins, even over the domain we have on file. Use it when you know ours is wrong.</span>
               </label>
               <div class="two" id="nameWrap" hidden>
                 <label class="f" for="fn">First name<input id="fn" type="text"></label>
                 <label class="f" for="ln">Last name<input id="ln" type="text"></label>
               </div>
               <button class="go" type="submit">Find their email</button>
-              <div style="text-align:center"><button class="textlnk" type="button" id="nameToggle">Type the name myself</button></div>
+              <div style="text-align:center;display:flex;gap:18px;justify-content:center;flex-wrap:wrap">
+                <button class="textlnk" type="button" id="nameToggle">Type the name myself</button>
+                <button class="textlnk" type="button" id="domToggle">Use a different domain</button>
+              </div>
             </form>
           </div>
           <div class="card" id="found" hidden></div>
@@ -580,6 +598,7 @@ Nikhil Prabhu</div>
      ================================================================== */
   var SUPABASE_URL = "https://fltmusfodkjnbcuhxove.supabase.co";
   var SUPABASE_KEY = "sb_publishable_SiaQ2xBpBlVE9d8a5_32vg_Pf3mPmEb";
+
   var GMAIL_SCOPE  = "https://www.googleapis.com/auth/gmail.send";
   /* ================================================================== */
 
@@ -963,8 +982,152 @@ Nikhil Prabhu</div>
     }).join("");
   }
 
+  /* ==================================================================
+     DOMAIN CHECKING
+
+     Read this before you trust anything it says.
+
+     What a browser CAN do: ask a DNS resolver over HTTPS whether a domain
+     exists and where its mail servers are. That is real verification and it
+     catches the failures that produce a guaranteed bounce, such as a domain
+     that does not exist or one with no mail server at all.
+
+     What a browser CANNOT do: check whether a specific mailbox exists. That
+     needs an SMTP conversation on port 25, which browsers cannot open, so it
+     needs a server.
+
+     And here is the part that matters most, which no amount of money fixes:
+     nearly every bank runs Microsoft 365, Proofpoint or Mimecast in front of
+     its mail, and those are configured to ACCEPT mail for addresses that do
+     not exist and bounce it later, or silently drop it. So even a paid
+     verification service returns "accept-all / unknown" for these domains.
+     A wrong first name at a real bank is undetectable before sending, by us
+     or by anyone. The honest design is to say so rather than print a green
+     tick, which is why the score is labelled format confidence.
+     ================================================================== */
+
+  var ROLE_LOCAL=/^(info|contact|contactus|careers?|recruit(ing|ment)?|hr|jobs|support|help|admin(istrator)?|sales|marketing|team|hello|office|press|media|legal|compliance|no-?reply|donotreply|webmaster|postmaster|abuse|billing|accounts?|en?quiries)$/i;
+
+  var dnsCache={};
+
+  function dnsQuery(name,type){
+    var u1="https://dns.google/resolve?name="+encodeURIComponent(name)+"&type="+type;
+    var u2="https://cloudflare-dns.com/dns-query?name="+encodeURIComponent(name)+"&type="+type;
+    return fetch(u1).then(function(r){
+      if(!r.ok) throw new Error("dns "+r.status); return r.json();
+    }).catch(function(){
+      return fetch(u2,{headers:{Accept:"application/dns-json"}}).then(function(r){
+        if(!r.ok) throw new Error("dns "+r.status); return r.json();
+      });
+    });
+  }
+
+  /* The MX hostname tells you how the domain treats unknown recipients, which
+     is the single most useful thing you can learn without sending. */
+  function mailProvider(hosts){
+    var h=hosts.join(" ");
+    if(/\.mail\.protection\.outlook\.com/.test(h)) return {
+      name:"Microsoft 365", strict:false,
+      note:"Microsoft 365 domains are almost always set to accept mail for any address, real or not. Nothing but a bounce will tell you this mailbox exists, and the bounce can take hours."};
+    if(/aspmx\.l\.google\.com|googlemail\.com|\.google\.com$/.test(h)) return {
+      name:"Google Workspace", strict:true,
+      note:"Google Workspace normally refuses unknown addresses on the spot, so if this one is wrong you should see a bounce within minutes rather than silence."};
+    if(/pphosted\.com|proofpoint/.test(h)) return {
+      name:"Proofpoint", strict:false,
+      note:"Proofpoint sits in front of the real mail server and accepts first, rejects later. Acceptance is not confirmation."};
+    if(/mimecast/.test(h)) return {
+      name:"Mimecast", strict:false,
+      note:"Mimecast accepts first and bounces later, so silence does not mean it arrived."};
+    if(/barracuda/.test(h)) return {
+      name:"Barracuda", strict:false,
+      note:"A filtering layer sits in front of the mailbox, so acceptance is not confirmation."};
+    if(/outlook\.com|hotmail|office365/.test(h)) return {
+      name:"Microsoft", strict:false, note:"Microsoft-hosted, so unknown addresses are usually accepted then bounced."};
+    return { name:hosts[0]||"an unrecognised host", strict:null,
+      note:"Can't tell how this domain handles addresses that don't exist."};
+  }
+
+  function checkDomain(domain){
+    if(!domain) return Promise.resolve({state:"skip"});
+    domain=String(domain).toLowerCase();
+    if(dnsCache[domain]) return Promise.resolve(dnsCache[domain]);
+    return dnsQuery(domain,"MX").then(function(j){
+      var out;
+      if(j && j.Status===3){
+        out={state:"nxdomain"};
+      } else {
+        var mx=((j&&j.Answer)||[]).filter(function(a){return a.type===15;})
+          .map(function(a){ return String(a.data).replace(/^\d+\s+/,"").replace(/\.$/,"").toLowerCase(); })
+          .filter(Boolean);
+        out = mx.length ? {state:"ok",hosts:mx,provider:mailProvider(mx)} : {state:"nomx"};
+      }
+      dnsCache[domain]=out;
+      return out;
+    }).catch(function(){ return {state:"unreachable"}; });
+  }
+
+  /* Gate on the send button. Two of these states make a bounce certain, so the
+     button is genuinely disabled rather than merely discouraging. */
+  function setSendGate(state){
+    st.gate=state;
+    var b=$("sendBtn"); if(!b) return;
+    if(state==="checking"){ b.disabled=true; b.textContent="Checking the domain…"; }
+    else if(state==="block"){ b.disabled=true; b.textContent="Can't send"; }
+    else { b.disabled=false; b.textContent="Send it"; }
+  }
+
+  function paintMx(html,cls){
+    var el=$("mxline"); if(!el) return;
+    el.className="mxline "+cls;
+    el.innerHTML=html;
+  }
+
+  function verifyResult(r){
+    var local=String(r.email||"").split("@")[0];
+    var domain=String(r.email||"").split("@")[1]||r.firm.domain;
+
+    setSendGate("checking");
+    paintMx('<span class="ic">◌</span><span>Checking whether '+esc(domain)+' exists and accepts mail…</span>',"checking");
+
+    /* A firm on file with a different domain is worth flagging loudly: this is
+       the Qatalyst / catalyst.com class of mistake. */
+    var known=FIRMS.filter(function(f){return f.name===r.firm.name;})[0];
+    var mismatch = known && known.domain && domain && known.domain!==domain;
+
+    return checkDomain(domain).then(function(res){
+      r.domainCheck=res;
+      var extra = mismatch
+        ? '<span class="mxsub">Heads up: this tool has '+esc(known.domain)+' on file for '+esc(r.firm.name)+
+          ', not '+esc(domain)+'. One of the two is wrong.</span>' : '';
+      var roleWarn = ROLE_LOCAL.test(local)
+        ? '<span class="mxsub">"'+esc(local)+'" looks like a shared inbox rather than a person. Those get triaged, not read.</span>' : '';
+
+      if(res.state==="nxdomain"){
+        paintMx('<span class="ic">✕</span><span><b>'+esc(domain)+' does not exist.</b> There is no such domain in DNS, so nothing sent to it can arrive. Check the spelling.'+extra+'</span>',"bad hard");
+        setSendGate("block"); return res;
+      }
+      if(res.state==="nomx"){
+        paintMx('<span class="ic">✕</span><span><b>'+esc(domain)+' has no mail server.</b> The domain exists but publishes no MX record, so mail to it will bounce.'+extra+'</span>',"bad hard");
+        setSendGate("block"); return res;
+      }
+      if(res.state==="unreachable"){
+        paintMx('<span class="ic">?</span><span>Couldn\'t reach a DNS resolver, so the domain was not checked. Nothing is wrong with the address as far as we know, but we did not confirm it either.'+extra+roleWarn+'</span>',"warn");
+        setSendGate("ok"); return res;
+      }
+      if(res.state==="ok"){
+        var p=res.provider;
+        var head='<b>'+esc(domain)+' is live and accepting mail</b>, handled by '+esc(p.name)+'.';
+        paintMx('<span class="ic">'+(p.strict===true?"✓":"!")+'</span><span>'+head+
+          '<span class="mxsub">'+esc(p.note)+'</span>'+extra+roleWarn+'</span>',
+          p.strict===true?"good":"warn");
+        setSendGate("ok"); return res;
+      }
+      setSendGate("ok"); return res;
+    });
+  }
+
   /* ================= lookup engine ================= */
-  var st={result:null};
+  var st={result:null,gate:"ok"};
   function build(p,first,last,domain){
     var f=norm(first),l=norm(last);
     if(!f||!l||!domain) return "";
@@ -1017,16 +1180,20 @@ Nikhil Prabhu</div>
     /* real outcomes from every user of the tool, once there are any */
     var c=firm.confirmed||0, b=firm.bounced||0;
     if(c+b>=3){ s += clamp(-12,10,Math.round(((c-b)/(c+b))*10)); }
-    return clamp(15,95,s);
+    /* Ceiling of 92, never 99. Nothing here can check a mailbox, so a number
+       that reads as certainty is a lie told in a friendly font. */
+    return clamp(15,92,s);
   }
+  /* This number scores the FORMAT, not the person. Saying otherwise is how a
+     student sends to a confidently wrong address and trusts it. */
   function plainWord(s,firm){
-    if(s>=80) return "Good odds. Confirmed format at "+firm.name+" and the name read cleanly, so send it without much worry.";
-    if(s>=55) return "Worth sending, but read it twice. Check the spelling against their profile first.";
-    return "Treat this as a guess. If it really matters, find the address another way, or send it and be ready for a bounce.";
+    if(s>=80) return "The pattern is right for "+firm.name+" and the name read cleanly out of the URL. That is all this number means: it scores the address format, not whether this particular person's mailbox exists.";
+    if(s>=55) return "Plausible, but check the spelling against their profile before sending. This scores the address format, not the person.";
+    return "Treat this as a guess. If it matters, find the address another way, or send it and be ready for a bounce.";
   }
   function reasons(firm,name,manual){
     var o=[];
-    if(firm.pattern!=="varies") o.push("<b>+</b><span>"+esc(PL[firm.pattern]||firm.pattern)+"@"+esc(firm.domain)+" is a confirmed format at "+esc(firm.name)+".</span>");
+    if(firm.pattern!=="varies") o.push("<b>+</b><span>"+esc(firm.name)+" is on the hand-checked list as "+esc(PL[firm.pattern]||firm.pattern)+"@"+esc(firm.domain)+". That is the house pattern, not this person's address.</span>");
     else o.push("<b>&minus;</b><span>No confirmed format for "+esc(firm.name)+". Everything below is ranked by how common the pattern is in general.</span>");
     if(manual) o.push("<b>+</b><span>You typed the name yourself instead of letting the URL guess it.</span>");
     else if(name.quality==="clean") o.push("<b>+</b><span>The profile URL split cleanly into two name parts.</span>");
@@ -1036,7 +1203,7 @@ Nikhil Prabhu</div>
     var c=firm.confirmed||0,b=firm.bounced||0;
     if(c+b>=3) o.push("<b>"+(c>=b?"+":"&minus;")+"</b><span>Students using this tool have reported "+c+
       " confirmed and "+b+" bounced at "+esc(firm.name)+".</span>");
-    o.push("<b>!</b><span>Almost every bank here runs Microsoft 365, which accepts mail for addresses that don't exist. Nothing confirms the mailbox is real.</span>");
+    o.push("<b>!</b><span>No tool can confirm a bank mailbox exists before you send. Their mail filters accept unknown addresses and bounce them later, which is why the domain check above is the only hard verification available.</span>");
     return o;
   }
   function alternates(firm,name){
@@ -1064,14 +1231,15 @@ Nikhil Prabhu</div>
   }
 
   function renderFound(r){
-    var b=r.score>=80?{k:"h",t:"Good odds"}:r.score>=55?{k:"m",t:"Check it first"}:{k:"l",t:"Rough guess"};
+    var b=r.score>=80?{k:"h",t:"Strong format match"}:r.score>=55?{k:"m",t:"Check before sending"}:{k:"l",t:"Rough guess"};
     var el=$("found");
     el.innerHTML=
       '<div class="who"><span class="nm">'+esc(((r.name.first||"")+" "+(r.name.last||"")).trim())+'</span>'+
         '<span class="fm">'+esc(r.firm.name)+(r.kind==="follow_up"?' &middot; follow-up':'')+'</span></div>'+
       '<div class="mailtop"><div class="mono addr">'+esc(r.email)+'</div>'+
         (r.score?'<div class="gauge"><div class="pct">'+r.score+'%</div>'+
-          '<div><div class="band '+b.k+'">'+b.t+'</div><div class="bandsub">confidence</div></div></div>':'')+'</div>'+
+          '<div><div class="band '+b.k+'">'+b.t+'</div><div class="bandsub">format confidence</div></div></div>':'')+'</div>'+
+      '<div id="mxline" class="mxline checking"><span class="ic">◌</span><span>Checking the domain…</span></div>'+
       (r.kind==="follow_up"
         ? '<p class="plain h" style="margin:0">You already emailed this address'+(r.lastSent?" on "+esc(dateWords(r.lastSent)):"")+
             '. This one goes out in the same thread, so it lands under the original.</p>'
@@ -1091,8 +1259,16 @@ Nikhil Prabhu</div>
     el.innerHTML=
       '<div class="subj"><span class="kicker">SUBJECT</span><label class="vh" for="subj">Subject</label>'+
         '<input id="subj" type="text" value="'+esc(r.draft.subject)+'"></div>'+
-      '<label class="vh" for="body">Email body</label><textarea id="body">'+esc(r.draft.body)+'</textarea>';
+      '<label class="vh" for="body">Email body</label><textarea id="body">'+esc(r.draft.body)+'</textarea>'+
+      '<div class="bodymeta"><span id="wc"></span><span>Under 150 words gets read. Over 200 gets skimmed.</span></div>';
     el.hidden=false;
+    var ta=$("body"), wc=$("wc");
+    function count(){
+      var n=ta.value.trim().split(/\s+/).filter(Boolean).length;
+      wc.textContent=n+" word"+(n===1?"":"s");
+      wc.style.color = n>200 ? "var(--mid)" : "var(--faint)";
+    }
+    ta.addEventListener("input",count); count();
   }
   function renderSend(r){
     var el=$("sendCard");
@@ -1173,6 +1349,13 @@ Nikhil Prabhu</div>
     if(!r) return;
     var to=r.email, su=$("subj").value, bo=$("body").value;
     if(!to){ toast("No address to send to."); return; }
+    if(st.gate==="checking"){ toast("Still checking the domain. One second."); return; }
+    if(st.gate==="block"){
+      var why=r.domainCheck&&r.domainCheck.state==="nxdomain"
+        ? "That domain does not exist, so this would bounce for certain."
+        : "That domain has no mail server, so this would bounce for certain.";
+      toast(why); return;
+    }
     if(atCap()){ toast("Daily cap reached. This is to protect your own Gmail account."); return; }
 
     if(!haveToken()){
@@ -1217,6 +1400,8 @@ Nikhil Prabhu</div>
         clearCards();
         $("url").value=""; $("firm").value=""; $("dom").value="";
         $("nameWrap").hidden=true; $("fn").value=""; $("ln").value="";
+        $("nameToggle").textContent="Type the name myself";
+        $("domWrap").hidden=true; $("domToggle").textContent="Use a different domain";
         $("firmHint").textContent="Name, nickname like PWP, or the domain.";
         $("url").focus();
         window.scrollTo({top:0,behavior:"smooth"});
@@ -1252,10 +1437,17 @@ Nikhil Prabhu</div>
     }
     var firm=resolveFirm($("firm").value);
     if(!firm){ toast("Which firm? Start typing and pick one."); $("firm").focus(); return; }
+
+    /* An override always wins, including over a firm we have on file. That is
+       how a student corrects a format we got wrong, and it is the only way the
+       mismatch warning downstream can ever fire. */
+    var typed=$("domWrap").hidden ? "" : $("dom").value.trim();
+    var d=typed.toLowerCase().replace(/^https?:\/\//,"").replace(/^www\./,"").replace(/\/.*$/,"").replace(/\/$/,"");
+    if(d) firm=Object.assign({},firm,{domain:d});
     if(!firm.domain){
-      var d=$("dom").value.trim().toLowerCase().replace(/^https?:\/\//,"").replace(/^www\./,"").replace(/\/.*$/,"");
-      if(!d){ $("domWrap").hidden=false; toast("No domain on file for "+firm.name+". Add it below."); $("dom").focus(); return; }
-      firm=Object.assign({},firm,{domain:d});
+      $("domWrap").hidden=false;
+      toast("No domain on file for "+firm.name+". Add it below.");
+      $("dom").focus(); return;
     }
     if(!name.first||!name.last){
       $("nameWrap").hidden=false;
@@ -1272,6 +1464,7 @@ Nikhil Prabhu</div>
       reasons:reasons(firm,name,manual), alts:alternates(firm,name), draft:draft(firm,name)
     };
     renderFound(st.result); renderNote(st.result); renderSend(st.result);
+    verifyResult(st.result);
     $("found").scrollIntoView({behavior:"smooth",block:"center"});
   }
 
@@ -1282,11 +1475,21 @@ Nikhil Prabhu</div>
     if(!w.hidden){ var n=parseSlug($("url").value);
       if(n.first)$("fn").value=n.first; if(n.last)$("ln").value=n.last; $("fn").focus(); }
   });
+  $("domToggle").addEventListener("click",function(){
+    var w=$("domWrap"); w.hidden=!w.hidden;
+    this.textContent=w.hidden?"Use a different domain":"Use the domain on file";
+    if(!w.hidden){
+      var f=resolveFirm($("firm").value);
+      if(f&&f.domain&&!$("dom").value) $("dom").value=f.domain;
+      $("dom").focus(); $("dom").select();
+    }
+  });
   $("firm").addEventListener("input",function(){
     var f=resolveFirm(this.value),h=$("firmHint");
-    $("domWrap").hidden=!(f&&!f.domain);
+    /* only auto-reveal for firms with nothing on file; the toggle handles the rest */
+    if(f&&!f.domain) $("domWrap").hidden=false;
     if(!this.value.trim()){ h.textContent="Name, nickname like PWP, or the domain."; return; }
-    if(f&&f.domain&&f.pattern!=="varies") h.textContent="Confirmed: "+(PL[f.pattern]||f.pattern)+"@"+f.domain;
+    if(f&&f.domain&&f.pattern!=="varies") h.textContent="House format on file: "+(PL[f.pattern]||f.pattern)+"@"+f.domain;
     else if(f&&f.pattern==="varies"&&f.domain) h.textContent="Format varies here, so expect a low number.";
     else h.textContent="Not on the list. Add their domain and we'll rank the candidates.";
   });
@@ -1473,6 +1676,7 @@ Nikhil Prabhu</div>
         };
         enterApp();
         renderFound(st.result); renderNote(st.result); renderSend(st.result);
+        verifyResult(st.result);
         refreshCap();
         $("found").scrollIntoView({behavior:"smooth",block:"center"});
       });
@@ -1573,7 +1777,7 @@ Nikhil Prabhu</div>
 
     at(5500,function(){
       if(!demoOn) return;
-      dHint.textContent="Confirmed: first.last@goldmanstanley.com"; dHint.className="dhint ok";
+      dHint.textContent="House format on file: first.last@goldmanstanley.com"; dHint.className="dhint ok";
     });
 
     at(5900,function(){
@@ -1585,7 +1789,7 @@ Nikhil Prabhu</div>
           dBtn.classList.remove("press");
           s1.hidden=true; s2.hidden=false;
           s2.classList.remove("fade"); void s2.offsetWidth; s2.classList.add("fade");
-          countTo(dPct,99,950);
+          countTo(dPct,91,950);
         });
       });
     });
